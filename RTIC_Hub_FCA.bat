@@ -36,7 +36,7 @@ if %errorlevel% NEQ 0 goto :SIN_INTERNET
 :: 2. VERIFICACION DE ADMINISTRADOR
 :: ==========================================
 net session >nul 2>&1
-if %errorLevel% == 0 goto :CHECK_UPDATE ::
+if %errorLevel% == 0 goto :CHECK_UPDATE
 
 :NO_ADMIN
 color 0C
@@ -77,60 +77,63 @@ exit
 
 
 :: ==========================================
-:: 2.5 VERIFICACION DE ACTUALIZACIONES (CORREGIDO)
+:: 2.5 VERIFICACION DE ACTUALIZACIONES
 :: ==========================================
 :CHECK_UPDATE
 set "V_LOCAL=9.3.10"
 set "URL_VERSION=https://raw.githubusercontent.com/azarel22/FCA/refs/heads/main/version.txt"
 set "URL_SCRIPT=https://raw.githubusercontent.com/azarel22/FCA/refs/heads/main/RTIC_Hub_FCA.bat"
 
-echo %CYAN%[SYSTEM] Buscando actualizaciones...%RST%
+echo %CYAN%[SYSTEM] Buscando actualizaciones en GitHub...%RST%
 
-:: Intentar descargar version remota
+:: Descargar version remota
 curl -sL "%URL_VERSION%" -o "%temp%\v_remota.txt"
 
-:: Validar si el archivo se descargo y no esta vacio
 if not exist "%temp%\v_remota.txt" (
-    echo %CG%[SKIP] No se pudo conectar al servidor de versiones.%RST%
+    echo %CG%[SKIP] No se pudo conectar con el servidor.%RST%
     timeout /t 1 >nul
     goto :PANTALLA_CARGA
 )
 
+:: Leer version y limpiar espacios/caracteres raros
 set /p V_REMOTA=<"%temp%\v_remota.txt"
+set "V_REMOTA=%V_REMOTA: =%"
+
 del "%temp%\v_remota.txt" >nul 2>&1
 
-:: Comparar versiones
-if "%V_REMOTA%" EQU "%V_LOCAL%" (
+:: Comparar versiones de forma segura
+if "%V_REMOTA%" == "%V_LOCAL%" (
     echo %CG%[OK] El sistema esta actualizado (v%V_LOCAL%)%RST%
     timeout /t 1 >nul
     goto :PANTALLA_CARGA
 )
 
+:: Si llegó aquí, hay actualización
 echo.
 echo %ORANGE%======================================================
-echo    [UPDATE] NUEVA VERSION DISPONIBLE: %V_REMOTA%
+echo    [UPDATE] NUEVA VERSION DETECTADA: %V_REMOTA%
 echo ======================================================%RST%
 echo.
-echo    La version actual (%V_LOCAL%) sera reemplazada.
+echo    Tu version: %V_LOCAL%
 echo.
 set /p upd="¿Deseas actualizar ahora? (S/N): "
 if /i "%upd%" NEQ "S" goto :PANTALLA_CARGA
 
-echo %CYAN%[1/2] Descargando nueva version...%RST%
+echo %CYAN%[1/2] Descargando version %V_REMOTA%...%RST%
 curl -sL "%URL_SCRIPT%" -o "%~dp0%~n0_nuevo.bat"
 
-echo %CYAN%[2/2] Aplicando reemplazo...%RST%
+echo %CYAN%[2/2] Aplicando reemplazo y reiniciando...%RST%
 
 (
     echo @echo off
     echo timeout /t 2 /nobreak ^>nul
-    echo del "%~f0"
+    echo del /f /q "%~f0"
     echo move /y "%~dp0%~n0_nuevo.bat" "%~f0"
     echo start "" "%~f0"
     echo del "%%~f0"
-) > "%temp%\updater.bat"
+) > "%temp%\updater_fca.bat"
 
-start "" "%temp%\updater.bat"
+start "" "%temp%\updater_fca.bat"
 exit
 
 
@@ -177,7 +180,7 @@ for /L %%i in (1,1,%TOTAL_STEPS%) do (
     echo %L8%
     echo.
     echo                      %CG%Creado por: Eichhh%RST%
-    echo                        %CG%Version: 9.3.10%RST%
+    echo                        %CG%Version: !V_LOCAL!%RST%
     echo.
     
     :: Logica de barra de progreso
