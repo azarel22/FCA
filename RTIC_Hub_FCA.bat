@@ -36,7 +36,7 @@ if %errorlevel% NEQ 0 goto :SIN_INTERNET
 :: 2. VERIFICACION DE ADMINISTRADOR
 :: ==========================================
 net session >nul 2>&1
-if %errorLevel% == 0 goto :ES_ADMIN
+if %errorLevel% == 0 goto :CHECK_UPDATE
 
 :NO_ADMIN
 color 0C
@@ -84,7 +84,7 @@ exit
 set "V_LOCAL=9.3.10"
 :: URL de txt
 set "URL_VERSION=https://raw.githubusercontent.com/azarel22/FCA/refs/heads/main/version.txt"
-:: URL del scrit princiapl
+:: URL del scrit principal
 set "URL_SCRIPT=https://raw.githubusercontent.com/azarel22/FCA/refs/heads/main/RTIC_Hub_FCA.bat"
 
 echo %CYAN%[SYSTEM] Buscando actualizaciones...%RST%
