@@ -36,7 +36,7 @@ if %errorlevel% NEQ 0 goto :SIN_INTERNET
 :: 2. VERIFICACION DE ADMINISTRADOR
 :: ==========================================
 net session >nul 2>&1
-if %errorLevel% == 0 goto :CHECK_UPDATE
+if %errorLevel% == 0 goto :CHECK_UPDATE ::
 
 :NO_ADMIN
 color 0C
@@ -134,6 +134,7 @@ exit
 :ES_ADMIN
 color 0B
 
+:PANTALLA_CARGA ::
 :: ==========================================
 :: PANTALLA DE CARGA
 :: ==========================================
