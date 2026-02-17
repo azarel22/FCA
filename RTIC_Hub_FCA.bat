@@ -14,7 +14,7 @@ set "GITHUB_USER=azarel22"
 set "GITHUB_REPO=FCA"
 set "GITHUB_BRANCH=main"
 set "SCRIPT_NAME=RTIC_Hub_FCA.bat"
-set "VERSION_ACTUAL=9.3.8"
+set "VERSION_ACTUAL=9.3.10"
 :: ==========================================
 
 :: --- DEFINICIÓN DE COLORES ---
