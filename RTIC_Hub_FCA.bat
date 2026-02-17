@@ -351,7 +351,7 @@ echo ========================================================
 echo        GESTION DE PANTALLA Y APARIENCIA
 echo ========================================================
 echo.
-echo    [1] MODO INSTITUCIONAL (Recomendado)
+echo    [1] MODO INSTITUCIONAL (Recomendado)(EN DESARROLLO)
 echo        - Descarga fondo FCA, lo aplica y bloquea cambios.
 echo.
 echo    [2] RESTAURAR PERMISOS (Desbloquear)
@@ -366,7 +366,7 @@ echo.
 echo --------------------------------------------------------
 set /p subop="Selecciona opcion: "
 
-if "%subop%"=="1" goto :PANTALLA_INSTITUCIONAL
+if "%subop%"=="1" goto :EN_DESARROLLO
 if "%subop%"=="2" goto :PANTALLA_RESTAURAR
 if "%subop%"=="3" goto :PANTALLA_SOLO_CANDADO
 if "%subop%"=="4" goto :MENU_PRINCIPAL
