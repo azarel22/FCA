@@ -77,7 +77,7 @@ exit
 
 
 :: ==========================================
-:: 2.5 VERIFICACION DE ACTUALIZACIONES
+:: 2.5 VERIFICACION DE ACTUALIZACIONES (MODO SEGURO)
 :: ==========================================
 :CHECK_UPDATE
 set "V_LOCAL=9.3.10"
@@ -86,29 +86,29 @@ set "URL_SCRIPT=https://raw.githubusercontent.com/azarel22/FCA/refs/heads/main/R
 
 echo %CYAN%[SYSTEM] Buscando actualizaciones en GitHub...%RST%
 
-:: Descargar version remota
-curl -sL "%URL_VERSION%" -o "%temp%\v_remota.txt"
+:: 1. Descarga con tiempo de espera (si falla, salta al programa)
+curl -sL --connect-timeout 5 "%URL_VERSION%" -o "%temp%\v_remota.txt" || goto :PANTALLA_CARGA
 
-if not exist "%temp%\v_remota.txt" (
-    echo %CG%[SKIP] No se pudo conectar con el servidor.%RST%
-    timeout /t 1 >nul
-    goto :PANTALLA_CARGA
-)
+:: 2. Si el archivo no existe o está vacío, ir al programa
+if not exist "%temp%\v_remota.txt" goto :PANTALLA_CARGA
 
-:: Leer version y limpiar espacios/caracteres raros
-set /p V_REMOTA=<"%temp%\v_remota.txt"
-set "V_REMOTA=%V_REMOTA: =%"
-
+:: 3. Leer versión usando un bucle FOR (es mucho más estable que set /p)
+set "V_REMOTA="
+for /f "tokens=*" %%a in ('type "%temp%\v_remota.txt"') do set "V_REMOTA=%%a"
 del "%temp%\v_remota.txt" >nul 2>&1
 
-:: Comparar versiones de forma segura
-if "%V_REMOTA%" == "%V_LOCAL%" (
+:: 4. Limpiar espacios y verificar que no esté vacío
+if not defined V_REMOTA goto :PANTALLA_CARGA
+set "V_REMOTA=%V_REMOTA: =%"
+
+:: 5. Comparación blindada
+if /i "%V_REMOTA%" == "%V_LOCAL%" (
     echo %CG%[OK] El sistema esta actualizado (v%V_LOCAL%)%RST%
     timeout /t 1 >nul
     goto :PANTALLA_CARGA
 )
 
-:: Si llegó aquí, hay actualización
+:: Si detecta versión distinta
 echo.
 echo %ORANGE%======================================================
 echo    [UPDATE] NUEVA VERSION DETECTADA: %V_REMOTA%
