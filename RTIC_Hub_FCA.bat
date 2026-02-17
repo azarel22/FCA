@@ -1,7 +1,7 @@
 @echo off
 :: ==========================================
 :: Creado por: Eichhh
-:: Versión: 9.3.10 (Prueba lista)
+:: Versión: 9.3.11 (Integracion del Changelog)
 :: ==========================================
 
 chcp 65001 >nul
@@ -13,7 +13,7 @@ set "GITHUB_USER=azarel22"
 set "GITHUB_REPO=FCA"
 set "GITHUB_BRANCH=main"
 set "SCRIPT_NAME=RTIC_Hub_FCA.bat"
-set "VERSION_ACTUAL=9.3.10"
+set "VERSION_ACTUAL=9.3.11"
 :: ==========================================
 
 :: --- DEFINICIÓN DE COLORES ---
@@ -104,6 +104,8 @@ if not exist "%TEMP%\RTIC_Updates" mkdir "%TEMP%\RTIC_Updates" >nul 2>&1
 :: Descargar archivo de versión desde GitHub
 echo   - Consultando repositorio GitHub...
 curl -L -s -f "https://raw.githubusercontent.com/azarel22/FCA/refs/heads/main/version.txt" -o "%TEMP%\RTIC_Updates\version.txt" 2>nul
+:: Descargar changelog
+curl -L -s -f "https://raw.githubusercontent.com/azarel22/FCA/refs/heads/main/changelog.txt" -o "%TEMP%\RTIC_Updates\changelog.txt" 2>nul
 
 if errorlevel 1 (
     echo   [AVISO] No se pudo verificar actualizaciones.
@@ -143,6 +145,12 @@ echo.
 echo   Version actual:      %VERSION_ACTUAL%
 echo   Nueva version:       %VERSION_REMOTA%
 echo.
+echo ════════════════════════════════════════════════════════════
+echo   NOVEDADES:
+echo ════════════════════════════════════════════════════════════
+for /f "usebackq tokens=*" %%l in ("%TEMP%\RTIC_Updates\changelog.txt") do (
+    echo   %%l
+)
 echo ════════════════════════════════════════════════════════════
 echo.
 echo ¿Deseas actualizar ahora?
