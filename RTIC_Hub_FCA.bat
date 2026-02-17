@@ -30,8 +30,63 @@ set "CYAN=%ESC%[96m"
 set "ORANGE=%ESC%[38;5;208m"
 :: -----------------------------------------------
 
+title RTIC_HUB_FCA
 
-title RTIC_HUB_FCA (Verificando actualizaciones...)
+:: ==========================================
+:: 1. VERIFICACION DE INTERNET (ESTRICTO)
+:: ==========================================
+cls
+color 0B
+echo.
+echo  [SYSTEM] Verificando conectividad...
+ping -n 1 -w 2000 8.8.8.8 >nul
+if %errorlevel% NEQ 0 goto :SIN_INTERNET
+
+:: ==========================================
+:: 2. VERIFICACION DE ADMINISTRADOR
+:: ==========================================
+net session >nul 2>&1
+if %errorLevel% == 0 goto :ES_ADMIN
+
+:NO_ADMIN
+color 0C
+cls
+echo.
+echo ======================================================
+echo    [ERROR] NECESITAS PERMISOS DE ADMINISTRADOR
+echo ======================================================
+echo.
+echo    Windows requiere permisos elevados para modificar
+echo    las politicas de seguridad.
+echo.
+echo    POR FAVOR: Clic derecho -^> Ejecutar como administrador.
+echo.
+pause
+exit
+
+:SIN_INTERNET
+cls
+echo.
+echo %R_ERR%======================================================
+echo      [ERROR] NO SE DETECTA CONEXION A INTERNET
+echo ======================================================%CW%
+echo.
+echo    No se recibio respuesta de internet
+echo    Es necesario internet para descargar los recursos.
+echo.
+echo    ¿Deseas ir al menu de redes para intentar
+echo    restablecer la conexion?
+echo.
+echo    [1] SI, Entrar al menu de redes
+echo    [2] NO, Salir del programa
+echo.
+set /p redfix="%CYAN%Selecciona una opcion: %RST%"
+
+if "%redfix%"=="1" goto :SUBMENU_REDES
+exit
+
+:ES_ADMIN
+color 0B
 
 :: ==========================================
 :: VERIFICAR ACTUALIZACIONES AL INICIO
@@ -168,68 +223,9 @@ exit
 
 :SKIP_UPDATE_CHECK
 
-title RTIC_HUB_FCA
-
-:: ==========================================
-:: 1. VERIFICACION DE INTERNET (ESTRICTO)
-:: ==========================================
-cls
-color 0B
-echo.
-echo  [SYSTEM] Verificando conectividad...
-ping -n 1 -w 2000 8.8.8.8 >nul
-if %errorlevel% NEQ 0 goto :SIN_INTERNET
-
-:: ==========================================
-:: 2. VERIFICACION DE ADMINISTRADOR
-:: ==========================================
-net session >nul 2>&1
-if %errorLevel% == 0 goto :ES_ADMIN
-
-:NO_ADMIN
-color 0C
-cls
-echo.
-echo ======================================================
-echo    [ERROR] NECESITAS PERMISOS DE ADMINISTRADOR
-echo ======================================================
-echo.
-echo    Windows requiere permisos elevados para modificar
-echo    las politicas de seguridad.
-echo.
-echo    POR FAVOR: Clic derecho -^> Ejecutar como administrador.
-echo.
-pause
-exit
-
-:SIN_INTERNET
-cls
-echo.
-echo %R_ERR%======================================================
-echo      [ERROR] NO SE DETECTA CONEXION A INTERNET
-echo ======================================================%CW%
-echo.
-echo    No se recibio respuesta de internet
-echo    Es necesario internet para descargar los recursos.
-echo.
-echo    ¿Deseas ir al menu de redes para intentar
-echo    restablecer la conexion?
-echo.
-echo    [1] SI, Entrar al menu de redes
-echo    [2] NO, Salir del programa
-echo.
-set /p redfix="%CYAN%Selecciona una opcion: %RST%"
-
-if "%redfix%"=="1" goto :SUBMENU_REDES
-exit
-
-:ES_ADMIN
-color 0B
-
 :: ==========================================
 :: PANTALLA DE CARGA
 :: ==========================================
-setlocal EnableDelayedExpansion
 
 :: Aumentamos tamaño de ventana para el logo
 mode con: cols=90 lines=30
