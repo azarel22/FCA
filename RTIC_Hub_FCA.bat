@@ -47,7 +47,7 @@ if not exist "%TEMP%\RTIC_Updates" mkdir "%TEMP%\RTIC_Updates" >nul 2>&1
 
 :: Descargar archivo de versión desde GitHub
 echo   - Consultando repositorio GitHub...
-curl -L -s -f "https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/%GITHUB_BRANCH%/version.txt" -o "%TEMP%\RTIC_Updates\version.txt" 2>nul
+curl -L -s -f "https://raw.githubusercontent.com/azarel22/FCA/refs/heads/main/version.txt" -o "%TEMP%\RTIC_Updates\version.txt" 2>nul
 
 if errorlevel 1 (
     echo   [AVISO] No se pudo verificar actualizaciones.
@@ -121,7 +121,7 @@ set "SCRIPT_PATH=%~f0"
 set "SCRIPT_DIR=%~dp0"
 
 echo [1/4] Descargando nueva version...
-curl -L -s -f "https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/%GITHUB_BRANCH%/%SCRIPT_NAME%" -o "%TEMP%\RTIC_Updates\nueva_version.bat"
+curl -L -s -f "https://raw.githubusercontent.com/azarel22/FCA/refs/heads/main/RTIC_Hub_FCA.bat" -o "%TEMP%\RTIC_Updates\nueva_version.bat"
 
 if errorlevel 1 (
     echo.
@@ -763,7 +763,7 @@ if not exist "%TEMP%\RTIC_Updates" mkdir "%TEMP%\RTIC_Updates" >nul 2>&1
 
 :: Descargar archivo de versión desde GitHub
 echo   - Consultando repositorio GitHub...
-curl -L -s -f "https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/%GITHUB_BRANCH%/version.txt" -o "%TEMP%\RTIC_Updates\version.txt" 2>nul
+curl -L -s -f "https://raw.githubusercontent.com/azarel22/FCA/refs/heads/main/version.txt" -o "%TEMP%\RTIC_Updates\version.txt" 2>nul
 
 if errorlevel 1 (
     echo.
