@@ -77,20 +77,25 @@ exit
 
 
 :: ==========================================
-:: 2.5 VERIFICACION DE ACTUALIZACIONES (NUEVO)
+:: 2.5 VERIFICACION DE ACTUALIZACIONES (CORREGIDO)
 :: ==========================================
 :CHECK_UPDATE
-:: --- CONFIGURACIÓN DEL REPOSITORIO ---
 set "V_LOCAL=9.3.10"
-:: URL de txt
 set "URL_VERSION=https://raw.githubusercontent.com/azarel22/FCA/refs/heads/main/version.txt"
-:: URL del scrit principal
 set "URL_SCRIPT=https://raw.githubusercontent.com/azarel22/FCA/refs/heads/main/RTIC_Hub_FCA.bat"
 
 echo %CYAN%[SYSTEM] Buscando actualizaciones...%RST%
 
-:: Descargar version remota a un temporal
+:: Intentar descargar version remota
 curl -sL "%URL_VERSION%" -o "%temp%\v_remota.txt"
+
+:: Validar si el archivo se descargo y no esta vacio
+if not exist "%temp%\v_remota.txt" (
+    echo %CG%[SKIP] No se pudo conectar al servidor de versiones.%RST%
+    timeout /t 1 >nul
+    goto :PANTALLA_CARGA
+)
+
 set /p V_REMOTA=<"%temp%\v_remota.txt"
 del "%temp%\v_remota.txt" >nul 2>&1
 
@@ -116,7 +121,6 @@ curl -sL "%URL_SCRIPT%" -o "%~dp0%~n0_nuevo.bat"
 
 echo %CYAN%[2/2] Aplicando reemplazo...%RST%
 
-:: Crear el script temporal para el intercambio de archivos
 (
     echo @echo off
     echo timeout /t 2 /nobreak ^>nul
@@ -134,7 +138,7 @@ exit
 :ES_ADMIN
 color 0B
 
-:PANTALLA_CARGA ::
+:PANTALLA_CARGA
 :: ==========================================
 :: PANTALLA DE CARGA
 :: ==========================================
