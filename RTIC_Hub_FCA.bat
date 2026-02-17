@@ -126,8 +126,6 @@ if "%VERSION_REMOTA%"=="" (
     goto :SKIP_UPDATE_CHECK
 )
 
-echo   - Version actual: %VERSION_ACTUAL%
-echo   - Version disponible: %VERSION_REMOTA%
 echo.
 
 :: Comparar versiones
@@ -787,8 +785,6 @@ if "%VERSION_REMOTA%"=="" (
     goto :MENU_PRINCIPAL
 )
 
-echo   - Version actual: %VERSION_ACTUAL%
-echo   - Version disponible: %VERSION_REMOTA%
 echo.
 
 :: Comparar versiones
