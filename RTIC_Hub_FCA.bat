@@ -81,34 +81,45 @@ exit
 :: ==========================================
 :CHECK_UPDATE
 set "V_LOCAL=9.3.10"
-set "URL_VERSION=https://raw.githubusercontent.com/azarel22/FCA/refs/heads/main/version.txt"
-set "URL_SCRIPT=https://raw.githubusercontent.com/azarel22/FCA/refs/heads/main/RTIC_Hub_FCA.bat"
+set "URL_VERSION=https://raw.githubusercontent.com/azarel22/FCA/main/version.txt"
+set "URL_SCRIPT=https://raw.githubusercontent.com/azarel22/FCA/main/RTIC_Hub_FCA.bat"
 
 echo %CYAN%[SYSTEM] Buscando actualizaciones en GitHub...%RST%
 
-:: 1. Descarga con tiempo de espera (si falla, salta al programa)
-curl -sL --connect-timeout 5 "%URL_VERSION%" -o "%temp%\v_remota.txt" || goto :PANTALLA_CARGA
+:: 1. Intentar descargar el archivo de versión
+curl -sL --connect-timeout 5 "%URL_VERSION%" -o "%temp%\v_remota.txt"
 
-:: 2. Si el archivo no existe o está vacío, ir al programa
+:: 2. Verificar si el comando curl tuvo éxito
+if %errorlevel% NEQ 0 (
+    echo %R_ERR%[!] No se pudo conectar con el servidor de actualizaciones.%RST%
+    timeout /t 2 >nul
+    goto :PANTALLA_CARGA
+)
+
+:: 3. Si el archivo no existe, saltar
 if not exist "%temp%\v_remota.txt" goto :PANTALLA_CARGA
 
-:: 3. Leer versión usando un bucle FOR (es mucho más estable que set /p)
+:: 4. Leer la versión remota de forma segura
 set "V_REMOTA="
-for /f "tokens=*" %%a in ('type "%temp%\v_remota.txt"') do set "V_REMOTA=%%a"
+for /f "usebackq tokens=*" %%a in ("%temp%\v_remota.txt") do set "V_REMOTA=%%a"
+
+:: Limpiar el archivo temporal de inmediato
 del "%temp%\v_remota.txt" >nul 2>&1
 
-:: 4. Limpiar espacios y verificar que no esté vacío
-if not defined V_REMOTA goto :PANTALLA_CARGA
+:: 5. Validar que se obtuvo una versión
+if "%V_REMOTA%"=="" goto :PANTALLA_CARGA
+
+:: 6. Limpiar posibles espacios en blanco
 set "V_REMOTA=%V_REMOTA: =%"
 
-:: 5. Comparación blindada
-if /i "%V_REMOTA%" == "%V_LOCAL%" (
+:: 7. Comparación
+if "%V_REMOTA%" == "%V_LOCAL%" (
     echo %CG%[OK] El sistema esta actualizado (v%V_LOCAL%)%RST%
     timeout /t 1 >nul
     goto :PANTALLA_CARGA
 )
 
-:: Si detecta versión distinta
+:: --- Si detecta versión distinta ---
 echo.
 echo %ORANGE%======================================================
 echo    [UPDATE] NUEVA VERSION DETECTADA: %V_REMOTA%
@@ -121,6 +132,13 @@ if /i "%upd%" NEQ "S" goto :PANTALLA_CARGA
 
 echo %CYAN%[1/2] Descargando version %V_REMOTA%...%RST%
 curl -sL "%URL_SCRIPT%" -o "%~dp0%~n0_nuevo.bat"
+
+:: Verificar si la descarga del nuevo script fue exitosa
+if %errorlevel% NEQ 0 (
+    echo %R_ERR%[ERROR] Error al descargar el nuevo archivo.%RST%
+    pause
+    goto :PANTALLA_CARGA
+)
 
 echo %CYAN%[2/2] Aplicando reemplazo y reiniciando...%RST%
 
