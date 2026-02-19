@@ -1,4 +1,5 @@
 9.3.12
 - Se agrego la descarga manual de los fondos y la creacion de la carpeta para que no tengan errores al ponerlos
 - Se agrego una instruccion de bloquear el regedit cuando se bloquea el hotspot
-- Se agrego una instruccion adicional que fuerza el nuevo fondo de pantalla antes del bloqueo manual de fondo (esto deberia arreglar el problema del regreso al fondo anterior despues del reinicio)
+- Se agrego una instruccion adicional que fuerza el nuevo fondo de pantalla antes del bloqueo manual de fondo 
+    (esto deberia arreglar el problema del regreso al fondo anterior despues del reinicio)
