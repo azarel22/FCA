@@ -1,7 +1,7 @@
 @echo off
 :: ==========================================
 :: Creado por: Eichhh
-:: Versión: 9.3.11 (Integracion del Changelog)
+:: Versión: 9.3.12 (Integracion de fondos y regedit)
 :: ==========================================
 
 chcp 65001 >nul
@@ -13,7 +13,7 @@ set "GITHUB_USER=azarel22"
 set "GITHUB_REPO=FCA"
 set "GITHUB_BRANCH=main"
 set "SCRIPT_NAME=RTIC_Hub_FCA.bat"
-set "VERSION_ACTUAL=9.3.11"
+set "VERSION_ACTUAL=9.3.12"
 :: ==========================================
 
 :: --- DEFINICIÓN DE COLORES ---
@@ -361,7 +361,11 @@ echo.
 echo    [3] SOLO BLOQUEAR FONDO ACTUAL
 echo        - Mantiene tu imagen actual pero impide cambiarla.
 echo.
-echo    [4] Volver al Menu Principal
+echo    [4] Descarga de fondos
+echo        - Descarga los fondos institucionales
+echo        - Crea la carpeta donde se almacenan
+echo.
+echo    [5] Volver al Menu Principal
 echo.
 echo --------------------------------------------------------
 set /p subop="Selecciona opcion: "
@@ -369,7 +373,8 @@ set /p subop="Selecciona opcion: "
 if "%subop%"=="1" goto :EN_DESARROLLO
 if "%subop%"=="2" goto :PANTALLA_RESTAURAR
 if "%subop%"=="3" goto :PANTALLA_SOLO_CANDADO
-if "%subop%"=="4" goto :MENU_PRINCIPAL
+if "%subop%"=="4" goto :Fondos
+if "%subop%"=="5" goto :MENU_PRINCIPAL
 goto :SUBMENU_PANTALLA
 
 :: --- LÓGICA DE PANTALLA ---
@@ -416,6 +421,10 @@ goto :RUTINA_CANDADO_COMUN
 
 :RUTINA_CANDADO_COMUN
 echo [PROCESANDO] Aplicando candados de seguridad (HKLM y HKCU)...
+:: Leer y fijar el fondo actual como politica persistente
+for /f "tokens=3*" %%a in ('reg query "HKCU\Control Panel\Desktop" /v Wallpaper 2^>nul') do set "WALLPAPER_ACTUAL=%%a %%b"
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v Wallpaper /t REG_SZ /d "%WALLPAPER_ACTUAL%" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v WallpaperStyle /t REG_SZ /d "10" /f >nul 2>&1
 :: Bloqueos Wallpaper
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\ActiveDesktop" /v "NoChangingWallPaper" /t REG_DWORD /d 1 /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\ActiveDesktop" /v "NoChangingWallPaper" /t REG_DWORD /d 1 /f >nul 2>&1
@@ -454,6 +463,23 @@ reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ThemeManager" /v "ThemeR
 RUNDLL32.EXE user32.dll,UpdatePerUserSystemParameters
 gpupdate /force >nul 2>&1
 start explorer.exe
+goto :EXITO_RETORNO
+
+
+:Fondos
+cls
+echo.
+echo [1/3] Preparando carpeta C:\Archivos_FCA_UAEMEX...
+if not exist "C:\Archivos_FCA_UAEMEX" mkdir "C:\Archivos_FCA_UAEMEX" >nul 2>&1
+icacls "C:\Archivos_FCA_UAEMEX" /grant Todos:F /T /Q >nul 2>&1
+
+echo [2/3] Descargando recursos...
+curl -L -s -o "C:\Archivos_FCA_UAEMEX\wallpaper_fca.png" "https://raw.githubusercontent.com/azarel22/FCA/25aad0a3eaf4d5be64142873f873ada8424662bd/wallpaper_fca.png"
+curl -L -s -o "C:\Archivos_FCA_UAEMEX\lock_screen_wallpaper_fca.png" "https://raw.githubusercontent.com/azarel22/FCA/25aad0a3eaf4d5be64142873f873ada8424662bd/lock_screen_wallpaper_fca.png"
+
+echo [3/3] Abriendo carpeta...
+start "" "C:\Archivos_FCA_UAEMEX"
+
 goto :EXITO_RETORNO
 
 
@@ -555,9 +581,11 @@ echo ========================================================
 echo.
 echo    [1] BLOQUEAR ZONA DE COBERTURA (Mobile Hotspot)
 echo        - Evita que el usuario comparta internet por WiFi.
+echo        - Bloquea regedit para los que intentan activar la zona nuevamente.
 echo.
 echo    [2] PERMITIR ZONA DE COBERTURA (Desbloquear)
 echo        - Restaura la opcion de compartir internet.
+echo        - Habilita el regedit nuevamente.
 echo.
 echo    [3] CONFIGURACION IP (MANUAL)
 echo        - Asignar IP Estatica, Mascara, Gateway y DNS.
@@ -581,10 +609,14 @@ cls
 echo.
 echo [PROCESANDO] Aplicando politicas de red...
 echo.
-echo [1/2] Modificando registro (Network Connections)...
+echo [1/3] Modificando registro (Network Connections)...
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Network Connections" /v NC_ShowSharedAccessUI /t REG_DWORD /d 0 /f >nul 2>&1
 
-echo [2/2] Forzando actualizacion de politicas...
+echo [2/3] El Editor del Registro ha sido bloqueado.
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\System" /v DisableRegistryTools /t REG_DWORD /d 1 /f
+
+
+echo [3/3] Forzando actualizacion de politicas...
 gpupdate /force >nul 2>&1
 
 echo.
@@ -602,6 +634,7 @@ echo.
 echo [1/2] Eliminando politica de restriccion...
 reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\Network Connections" /v NC_ShowSharedAccessUI /f >nul 2>&1
 reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\Network Connections" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\System" /v DisableRegistryTools /t REG_DWORD /d 0 /f
 
 echo [2/2] Actualizando politicas...
 gpupdate /force >nul 2>&1
