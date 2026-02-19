@@ -1,0 +1,319 @@
+@echo off
+:: ==========================================
+:: Creado por: Eichhh
+:: Versión: 5.0 (Menu Reestructurado + Redes)
+:: ==========================================
+
+chcp 65001 >nul
+title Herramienta de Gestion Institucional FCA - UAEMEX
+
+:: ==========================================
+:: 1. VERIFICACION DE INTERNET (ESTRICTO)
+:: ==========================================
+cls
+color 0B
+echo.
+echo  [SYSTEM] Verificando conectividad...
+ping -n 1 -w 2000 8.8.8.8 >nul
+if %errorlevel% NEQ 0 goto :SIN_INTERNET
+
+:: ==========================================
+:: 2. VERIFICACION DE ADMINISTRADOR
+:: ==========================================
+net session >nul 2>&1
+if %errorLevel% == 0 goto :ES_ADMIN
+
+:NO_ADMIN
+color 0C
+cls
+echo.
+echo ======================================================
+echo    [ERROR] NECESITAS PERMISOS DE ADMINISTRADOR
+echo ======================================================
+echo.
+echo    Windows requiere permisos elevados para modificar
+echo    las politicas de seguridad.
+echo.
+echo    POR FAVOR: Clic derecho -> Ejecutar como administrador.
+echo.
+pause
+exit
+
+:SIN_INTERNET
+color 0C
+cls
+echo.
+echo ======================================================
+echo      [ERROR] NO SE DETECTA CONEXION A INTERNET
+echo ======================================================
+echo.
+echo    Esta herramienta requiere internet para descargar
+echo    recursos y verificar configuraciones.
+echo.
+echo    [ACCION DENEGADA] Conectate a una red e intenta de nuevo.
+echo.
+pause
+exit
+
+:ES_ADMIN
+color 0B
+
+:: ==========================================
+:: 3. MENU PRINCIPAL (JERARQUICO)
+:: ==========================================
+:MENU_PRINCIPAL
+cls
+echo ========================================================
+echo        SISTEMA DE GESTION FCA - UAEMEX
+echo        Versión: 5.0 (Stable)
+echo ========================================================
+echo.
+echo    Selecciona una categoria:
+echo.
+echo    [1] INSTALACION INICIAL (EN DESARROLLO)
+echo        - Drivers, paqueteria basica, etc.
+echo.
+echo    [2] CONFIGURACION DE PANTALLA Y FONDO
+echo        - Modo institucional, bloquear fondos, restaurar.
+echo.
+echo    [3] OPTIMIZADOR DEL SISTEMA (EN DESARROLLO)
+echo        - Limpieza, rendimiento, temporales.
+echo.
+echo    [4] GESTION DE REDES Y CONECTIVIDAD
+echo        - Bloquear compartir internet (Hotspot), WiFi.
+echo.
+echo    [5] ACTIVACION DE LICENCIAS (EN DESARROLLO)
+echo        - Windows y Office.
+echo.
+echo    [6] SALIR
+echo.
+echo --------------------------------------------------------
+set /p opcion="Escribe el numero y presiona Enter: "
+
+if "%opcion%"=="1" goto :EN_DESARROLLO
+if "%opcion%"=="2" goto :SUBMENU_PANTALLA
+if "%opcion%"=="3" goto :EN_DESARROLLO
+if "%opcion%"=="4" goto :SUBMENU_REDES
+if "%opcion%"=="5" goto :EN_DESARROLLO
+if "%opcion%"=="6" exit
+goto :MENU_PRINCIPAL
+
+:: ==========================================
+:: SECCION 1, 3, 5: PLACEHOLDERS
+:: ==========================================
+:EN_DESARROLLO
+cls
+echo.
+echo ======================================================
+echo        MODULO EN FASE DE DESARROLLO
+echo ======================================================
+echo.
+echo    Esta funcion estara disponible en la proxima
+echo    actualizacion del script.
+echo.
+pause
+goto :MENU_PRINCIPAL
+
+:: ==========================================
+:: SECCION 2: SUBMENU PANTALLA
+:: ==========================================
+:SUBMENU_PANTALLA
+cls
+echo ========================================================
+echo        GESTION DE PANTALLA Y APARIENCIA
+echo ========================================================
+echo.
+echo    [1] MODO INSTITUCIONAL (Recomendado)
+echo        - Descarga fondo FCA, lo aplica y bloquea cambios.
+echo.
+echo    [2] RESTAURAR PERMISOS (Desbloquear)
+echo        - Permite cambiar el fondo manualmente.
+echo        - NO elimina las imagenes descargadas.
+echo.
+echo    [3] SOLO BLOQUEAR FONDO ACTUAL
+echo        - Mantiene tu imagen actual pero impide cambiarla.
+echo.
+echo    [4] Volver al Menu Principal
+echo.
+echo --------------------------------------------------------
+set /p subop="Selecciona opcion: "
+
+if "%subop%"=="1" goto :PANTALLA_INSTITUCIONAL
+if "%subop%"=="2" goto :PANTALLA_RESTAURAR
+if "%subop%"=="3" goto :PANTALLA_SOLO_CANDADO
+if "%subop%"=="4" goto :MENU_PRINCIPAL
+goto :SUBMENU_PANTALLA
+
+:: --- LÓGICA DE PANTALLA ---
+
+:PANTALLA_INSTITUCIONAL
+cls
+echo.
+echo [1/7] Deteniendo interfaz visual...
+taskkill /f /im explorer.exe >nul 2>&1
+
+:: Limpieza previa
+reg delete "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\ActiveDesktop" /f >nul 2>&1
+reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\ActiveDesktop" /f >nul 2>&1
+
+echo [2/7] Preparando carpeta C:\Archivos_FCA_UAEMEX...
+if not exist "C:\Archivos_FCA_UAEMEX" mkdir "C:\Archivos_FCA_UAEMEX" >nul 2>&1
+icacls "C:\Archivos_FCA_UAEMEX" /grant Todos:F /T /Q >nul 2>&1
+
+echo [3/7] Descargando recursos...
+curl -L -s -o "C:\Archivos_FCA_UAEMEX\wallpaper_fca.png" "https://raw.githubusercontent.com/azarel22/FCA/25aad0a3eaf4d5be64142873f873ada8424662bd/wallpaper_fca.png"
+curl -L -s -o "C:\Archivos_FCA_UAEMEX\lock_screen_wallpaper_fca.png" "https://raw.githubusercontent.com/azarel22/FCA/25aad0a3eaf4d5be64142873f873ada8424662bd/lock_screen_wallpaper_fca.png"
+
+echo [4/7] Aplicando fondo al sistema...
+reg add "HKCU\Control Panel\Desktop" /v Wallpaper /t REG_SZ /d "C:\Archivos_FCA_UAEMEX\wallpaper_fca.png" /f >nul 2>&1
+reg add "HKCU\Control Panel\Desktop" /v WallpaperStyle /t REG_SZ /d "2" /f >nul 2>&1
+powershell -inputformat none -outputformat none -NonInteractive -Command "Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public class WP { [DllImport(\"user32.dll\")] public static extern int SystemParametersInfo(int uAction, int uParam, string lpvParam, int fuWinIni); }'; [WP]::SystemParametersInfo(20, 0, 'C:\Archivos_FCA_UAEMEX\wallpaper_fca.png', 3)"
+RUNDLL32.EXE user32.dll,UpdatePerUserSystemParameters
+echo [5/7] Esperando aplicacion de cambios...
+timeout /t 2 /nobreak >nul
+goto :RUTINA_CANDADO_COMUN
+
+:PANTALLA_SOLO_CANDADO
+cls
+echo.
+echo [1/3] Preparando bloqueo...
+taskkill /f /im explorer.exe >nul 2>&1
+echo [2/3] Aplicando seguridad al fondo actual...
+goto :RUTINA_CANDADO_COMUN
+
+:RUTINA_CANDADO_COMUN
+echo [PROCESANDO] Aplicando candados de seguridad (HKLM y HKCU)...
+:: Bloqueos Wallpaper
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\ActiveDesktop" /v "NoChangingWallPaper" /t REG_DWORD /d 1 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\ActiveDesktop" /v "NoChangingWallPaper" /t REG_DWORD /d 1 /f >nul 2>&1
+:: Bloqueos Lock Screen
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Personalization" /v "LockScreenImage" /t REG_SZ /d "C:\Archivos_FCA_UAEMEX\lock_screen_wallpaper_fca.png" /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Personalization" /v "NoChangingLockScreen" /t REG_DWORD /d 1 /f >nul 2>&1
+:: Ocultar opciones
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\System" /v "NoDispBackgroundPage" /t REG_DWORD /d 1 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v "NoDispBackgroundPage" /t REG_DWORD /d 1 /f >nul 2>&1
+
+echo.
+echo Actualizando politicas...
+gpupdate /force >nul 2>&1
+start explorer.exe
+goto :EXITO_RETORNO
+
+:PANTALLA_RESTAURAR
+cls
+echo.
+echo [1/4] Deteniendo interfaz...
+taskkill /f /im explorer.exe >nul 2>&1
+echo [2/4] Eliminando Politicas de Restriccion (HKLM y HKCU)...
+:: HKLM
+reg delete "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\ActiveDesktop" /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\Personalization" /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v NoDispBackgroundPage /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v Wallpaper /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v WallpaperStyle /f >nul 2>&1
+:: HKCU
+reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\ActiveDesktop" /f >nul 2>&1
+reg delete "HKCU\Software\Policies\Microsoft\Windows\Personalization" /f >nul 2>&1
+reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\System" /v NoDispBackgroundPage /f >nul 2>&1
+
+echo [3/4] Conservando archivos descargados (Segun solicitud)...
+:: NOTA: Se ha eliminado el comando rmdir para conservar las imagenes
+
+echo [4/4] Restaurando interfaz...
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ThemeManager" /v "ThemeRoaming" /t REG_DWORD /d 1 /f >nul 2>&1
+RUNDLL32.EXE user32.dll,UpdatePerUserSystemParameters
+gpupdate /force >nul 2>&1
+start explorer.exe
+goto :EXITO_RETORNO
+
+:: ==========================================
+:: SECCION 4: SUBMENU REDES
+:: ==========================================
+:SUBMENU_REDES
+cls
+echo ========================================================
+echo        GESTION DE REDES Y CONECTIVIDAD
+echo ========================================================
+echo.
+echo    [1] BLOQUEAR ZONA DE COBERTURA (Mobile Hotspot)
+echo        - Evita que el usuario comparta internet por WiFi.
+echo        - Deshabilita la interfaz de "Zona con cobertura".
+echo.
+echo    [2] PERMITIR ZONA DE COBERTURA (Desbloquear)
+echo        - Restaura la opcion de compartir internet.
+echo.
+echo    [3] Volver al Menu Principal
+echo.
+echo --------------------------------------------------------
+set /p subop="Selecciona opcion: "
+
+if "%subop%"=="1" goto :RED_BLOQUEAR_HOTSPOT
+if "%subop%"=="2" goto :RED_DESBLOQUEAR_HOTSPOT
+if "%subop%"=="3" goto :MENU_PRINCIPAL
+goto :SUBMENU_REDES
+
+:RED_BLOQUEAR_HOTSPOT
+cls
+echo.
+echo [PROCESANDO] Aplicando politicas de red...
+echo.
+echo [1/2] Modificando registro (Network Connections)...
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Network Connections" /v NC_ShowSharedAccessUI /t REG_DWORD /d 0 /f >nul 2>&1
+
+echo [2/2] Forzando actualizacion de politicas...
+gpupdate /force >nul 2>&1
+
+echo.
+echo [INFO] Es probable que requieras REINICIAR el equipo
+echo        para que la opcion desaparezca totalmente de Configuracion.
+echo.
+pause
+goto :EXITO_RETORNO
+
+:RED_DESBLOQUEAR_HOTSPOT
+cls
+echo.
+echo [PROCESANDO] Eliminando bloqueos de red...
+echo.
+echo [1/2] Eliminando politica de restriccion...
+reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\Network Connections" /v NC_ShowSharedAccessUI /f >nul 2>&1
+:: Borramos la carpeta si queda vacia
+reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\Network Connections" /f >nul 2>&1
+
+echo [2/2] Actualizando politicas...
+gpupdate /force >nul 2>&1
+
+echo.
+echo [INFO] Bloqueo eliminado. Si no aparece la opcion, reinicia.
+echo.
+pause
+goto :EXITO_RETORNO
+
+:: ==========================================
+:: FINAL COMUN
+:: ==========================================
+:EXITO_RETORNO
+cls
+echo.
+echo ========================================================
+echo          OPERACION COMPLETADA CON EXITO
+echo ========================================================
+echo.
+echo ⠀⠀⠀⠀⠀⣴⠉⡙⠳⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣠⠤⣚⡯⠴⢬⣱⡀⠀
+echo ⠀⠀⠀⠀⢰⡇⣷⡌⢲⣄⡑⢢⡀⠀⠀⠀⠀⠀⢠⠾⢋⠔⣨⣴⣿⣷⡌⠇⡇⠀
+echo ⠀⠀⠀⠀⢸⢹⣿⣿⣄⢻⣿⣷⣝⠷⢤⣤⣤⡶⢋⣴⣑⠟⠿⠿⠿⣿⣿⡀⡇⠀
+echo ⠀⠀⠀⠀⢸⢸⣿⡄⢁⣸⣿⣋⣥⣶⣶⣶⣶⣶⣶⣿⣿⣶⣟⡁⠚⣿⣿⡇⡇⠀
+echo ⢀⣠⡤⠤⠾⡘⠋⢀⣘⠋⠉⠉⠉⠉⢭⣭⣭⣭⣍⠉⢩⣭⠉⠉⠂⠙⠛⠃⣇⡀
+echo ⠏⠀⠀⢿⣿⣷⡀⠀⢿⡄⠀⠀⠀⠀⠀⠀⢿⣿⣿⣿⣆⠀⢿⣇⠀⠀⠀⠀⠀⠀⠈⢱
+echo ⣦⠀⠀⠈⢿⣿⣧⠀⠘⣿⠀⠀⠀⡀⠀⠀⠘⣿⣿⣿⣿⡆⠀⢻⡆⠀⠀⠀⠀⠀⠀⢸
+echo ⢻⡄⠀⠀⠘⠛⠉⠂⠀⠙⠁⠀⣼⣧⠀⠀⠀⠈⠀⠀⠈⠙⠀⠘⠓⠀⠀⠀⠀⠀⢀⡟
+echo ⠀⢳⡀⠀⠀⠀⠀⠀⠀⠀⠀⠸⠿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡀⣏⠀
+echo ⠀⠀⠛⢶⢰⣶⢢⣤⣤⣄⠲⣶⠖⠀⣙⣀⠀⠀⠀⠤⢤⣀⣀⡀⣀⣠⣾⠟⡌⠀
+echo ⠀⠀⠀⠘⢄⠃⣿⣿⣿⣿⠗⠀⠾⢿⣿⣿⣿⣿⣿⣿⣶⣶⣶⣶⠸⠟⣡⣤⡳⢦
+echo ⠀⠀⠀⠀⠀⢻⡆⣙⡿⢷⣾⣿⣶⣾⣿⣿⣿⣿⣿⣿⣿⡿⠟⢡⣴⣾⣿⣿⣿⣦
+echo ⠀⠀⠀⠀⠀⡼⢁⡟⣫⣶⣍⡙⠛⠛⠛⠛⠛⣽⡖⣉⣠⣶⣶⣌⠛⢿⣿⣿⣿⣿
+echo ⠀⠀⠀⢀⠔⢡⢎⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⠹⣿⣿⣿
+echo ⠀⢠⠖⢁⣴⡿⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⢹⣿⣿
+echo.
+pause
+goto :MENU_PRINCIPAL
