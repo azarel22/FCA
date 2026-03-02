@@ -1,7 +1,7 @@
 @echo off
 :: ==========================================
 :: Creado por: Eichhh
-:: Versión: 9.3.12 (Integracion de fondos y regedit)
+:: Versión: 9.3.13 (alch ni me acuerdo, lo ultimo fue la correccion del lock screen y lo de reiniciar)
 :: ==========================================
 
 :: Deja de ver mi codigo, inche chismoso
@@ -36,7 +36,7 @@ set "GITHUB_USER=azarel22"
 set "GITHUB_REPO=FCA"
 set "GITHUB_BRANCH=main"
 set "SCRIPT_NAME=RTIC_Hub_FCA.bat"
-set "VERSION_ACTUAL=9.3.12"
+set "VERSION_ACTUAL=9.3.13"
 :: ==========================================
 
 :: --- DEFINICIÓN DE COLORES ---
@@ -297,7 +297,6 @@ for /L %%i in (1,1,%TOTAL_STEPS%) do (
     echo                  %ORANGE%!BARRA!%RST%                     
     echo                  Cargando modulos...  %%i/13
     
-    :: METODO PING (Mas ligero y estable que powershell)
     ping -n 1 -w 200 127.255.255.255 >nul
 )
 
@@ -335,7 +334,10 @@ echo.
 echo    [6] BUSCAR ACTUALIZACIONES
 echo        - Verificar si hay nueva version disponible.
 echo.
-echo    [7] SALIR
+echo    [7] Para aplicar cambios
+echo        - Reiniciar/cerrar sesion 
+echo.
+echo    [8] SALIR
 echo.
 echo --------------------------------------------------------
 set /p opcion="Escribe el numero y presiona Enter: "
@@ -346,7 +348,8 @@ if "%opcion%"=="3" goto :SUBMENU_OPTIMIZADOR
 if "%opcion%"=="4" goto :SUBMENU_REDES
 if "%opcion%"=="5" goto :ACTIVACION
 if "%opcion%"=="6" goto :VERIFICAR_ACTUALIZACIONES_MANUAL
-if "%opcion%"=="7" exit
+if "%opcion%"=="7" goto :OPCIONES_SISTEMA
+if "%opcion%"=="8" exit
 goto :MENU_PRINCIPAL
 
 :: ==========================================
@@ -444,17 +447,28 @@ goto :RUTINA_CANDADO_COMUN
 
 :RUTINA_CANDADO_COMUN
 echo [PROCESANDO] Aplicando candados de seguridad (HKLM y HKCU)...
-:: Leer y fijar el fondo actual como politica persistente
-for /f "tokens=3*" %%a in ('reg query "HKCU\Control Panel\Desktop" /v Wallpaper 2^>nul') do set "WALLPAPER_ACTUAL=%%a %%b"
+
+:: Leer el fondo actual correctamente (maneja rutas con espacios)
+for /f "skip=2 tokens=2,*" %%a in ('reg query "HKCU\Control Panel\Desktop" /v Wallpaper 2^>nul') do set "WALLPAPER_ACTUAL=%%b"
+
+:: Limpiar espacios sobrantes al final
+set "WALLPAPER_ACTUAL=%WALLPAPER_ACTUAL: =%"
+:: Restaurar espacios en rutas (si la ruta los tiene, usa comillas en /d)
+
+echo [DEBUG] Fondo detectado: %WALLPAPER_ACTUAL%
+
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v Wallpaper /t REG_SZ /d "%WALLPAPER_ACTUAL%" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v WallpaperStyle /t REG_SZ /d "10" /f >nul 2>&1
+
 :: Bloqueos Wallpaper
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\ActiveDesktop" /v "NoChangingWallPaper" /t REG_DWORD /d 1 /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\ActiveDesktop" /v "NoChangingWallPaper" /t REG_DWORD /d 1 /f >nul 2>&1
+
 :: Bloqueos Lock Screen
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Personalization" /v "LockScreenImage" /t REG_SZ /d "C:\Archivos_FCA_UAEMEX\lock_screen_wallpaper_fca.png" /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Personalization" /v "NoChangingLockScreen" /t REG_DWORD /d 1 /f >nul 2>&1
-:: Ocultar opciones
+
+:: Ocultar opciones de personalización
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\System" /v "NoDispBackgroundPage" /t REG_DWORD /d 1 /f >nul 2>&1
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v "NoDispBackgroundPage" /t REG_DWORD /d 1 /f >nul 2>&1
 
@@ -632,19 +646,17 @@ cls
 echo.
 echo [PROCESANDO] Aplicando politicas de red...
 echo.
-echo [1/3] Modificando registro (Network Connections)...
+echo [1/4] Ocultando hotspot en Configuracion de Windows...
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Network Connections" /v NC_ShowSharedAccessUI /t REG_DWORD /d 0 /f >nul 2>&1
-
-echo [2/3] El Editor del Registro ha sido bloqueado.
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\System" /v DisableRegistryTools /t REG_DWORD /d 1 /f
-
-
-echo [3/3] Forzando actualizacion de politicas...
+echo [2/4] Deshabilitando servicio de hotspot (icssvc)...
+sc config icssvc start= disabled >nul 2>&1
+net stop icssvc >nul 2>&1
+echo [3/4] Bloqueando acceso al registro...
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\System" /v DisableRegistryTools /t REG_DWORD /d 1 /f >nul 2>&1
+echo [4/4] Forzando actualizacion de politicas...
 gpupdate /force >nul 2>&1
-
 echo.
-echo [INFO] Bloqueo aplicado.
-echo        Es probable que requieras REINICIAR el equipo.
+echo [INFO] Bloqueo aplicado. REINICIA para ver todos los cambios.
 echo.
 pause
 goto :EXITO_RETORNO
@@ -654,16 +666,17 @@ cls
 echo.
 echo [PROCESANDO] Eliminando bloqueos de red...
 echo.
-echo [1/2] Eliminando politica de restriccion...
+echo [1/4] Restaurando acceso al registro...
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\System" /v DisableRegistryTools /t REG_DWORD /d 0 /f >nul 2>&1
+echo [2/4] Eliminando politica de hotspot...
 reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\Network Connections" /v NC_ShowSharedAccessUI /f >nul 2>&1
-reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows\Network Connections" /f >nul 2>&1
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\System" /v DisableRegistryTools /t REG_DWORD /d 0 /f
-
-echo [2/2] Actualizando politicas...
+echo [3/4] Reactivando servicio de hotspot...
+sc config icssvc start= demand >nul 2>&1
+net start icssvc >nul 2>&1
+echo [4/4] Actualizando politicas...
 gpupdate /force >nul 2>&1
-
 echo.
-echo [INFO] Bloqueo eliminado. Si no aparece la opcion, reinicia.
+echo [INFO] Bloqueo eliminado. Reinicia si no aparece la opcion.
 echo.
 pause
 goto :EXITO_RETORNO
@@ -878,6 +891,37 @@ set /p update_choice_manual="Selecciona una opcion: "
 
 if "%update_choice_manual%"=="1" goto :PROCESAR_ACTUALIZACION
 goto :MENU_PRINCIPAL
+
+
+:OPCIONES_SISTEMA
+cls
+echo.
+echo ========================================
+echo        OPCIONES DEL SISTEMA
+echo ========================================
+echo.
+echo  [1] Reiniciar equipo
+echo  [2] Cerrar sesion
+echo  [0] Volver
+echo.
+set /p "OPCION_SIS=Selecciona una opcion: "
+
+if "%OPCION_SIS%"=="1" goto :REINICIAR
+if "%OPCION_SIS%"=="2" goto :CERRAR_SESION
+if "%OPCION_SIS%"=="0" goto :MENU_PRINCIPAL
+goto :OPCIONES_SISTEMA
+
+:REINICIAR
+echo.
+echo Reiniciando equipo...
+shutdown /r /t 5 /c "El equipo se reiniciara en 5 segundos"
+goto :EOF
+
+:CERRAR_SESION
+echo.
+echo Cerrando sesion...
+shutdown /l
+goto :EOF
 
 
 :: ==========================================
