@@ -781,26 +781,28 @@ goto :ACTIVACION
 :VERIFICAR_ACTUALIZACIONES_MANUAL
 cls
 echo.
-echo [AUTO-UPDATE] Verificando actualizaciones...
+echo %YELL%════════════════════════════════════════════════════════════%RST%
+echo %YELL%             VERIFICADOR DE ACTUALIZACIONES%RST%
+echo %YELL%════════════════════════════════════════════════════════════%RST%
+echo.
+echo %CG%   Consultando repositorio GitHub...%RST%
 echo.
 
-:: Crear carpeta temporal si no existe
 if not exist "%TEMP%\RTIC_Updates" mkdir "%TEMP%\RTIC_Updates" >nul 2>&1
 
-:: Descargar archivo de versión desde GitHub
-echo   - Consultando repositorio GitHub...
 curl -L -s -f "https://raw.githubusercontent.com/azarel22/FCA/refs/heads/main/version.txt" -o "%TEMP%\RTIC_Updates\version.txt" 2>nul
 
 if errorlevel 1 (
+    echo %R_ERR%════════════════════════════════════════════════════════════%RST%
+    echo %R_ERR%   ERROR: NO SE PUDO CONECTAR AL REPOSITORIO%RST%
+    echo %R_ERR%════════════════════════════════════════════════════════════%RST%
     echo.
-    echo [ERROR] No se pudo conectar al repositorio.
-    echo Verifica tu conexion a internet.
+    echo    Verifica tu conexion a internet e intentalo de nuevo.
     echo.
     pause
     goto :MENU_PRINCIPAL
 )
 
-:: Leer versión desde el archivo descargado
 set "VERSION_REMOTA="
 for /f "usebackq tokens=*" %%a in ("%TEMP%\RTIC_Updates\version.txt") do (
     set "VERSION_REMOTA=%%a"
@@ -809,18 +811,22 @@ for /f "usebackq tokens=*" %%a in ("%TEMP%\RTIC_Updates\version.txt") do (
 :version_leida_manual
 
 if "%VERSION_REMOTA%"=="" (
-    echo.
-    echo [ERROR] No se pudo leer la informacion de version.
+    echo %R_ERR%════════════════════════════════════════════════════════════%RST%
+    echo %R_ERR%   ERROR: NO SE PUDO LEER LA INFORMACION DE VERSION%RST%
+    echo %R_ERR%════════════════════════════════════════════════════════════%RST%
     echo.
     pause
     goto :MENU_PRINCIPAL
 )
 
+echo %CG%   Version instalada:   %CW%%VERSION_ACTUAL%%RST%
+echo %CG%   Version en GitHub:   %CW%%VERSION_REMOTA%%RST%
 echo.
 
-:: Comparar versiones
 if "%VERSION_ACTUAL%"=="%VERSION_REMOTA%" (
-    echo [OK] Ya tienes la ultima version instalada.
+    echo %CW%════════════════════════════════════════════════════════════%RST%
+    echo %YELL%   Tu sistema esta al dia. No hay actualizaciones.%RST%
+    echo %CW%════════════════════════════════════════════════════════════%RST%
     echo.
     pause
     goto :MENU_PRINCIPAL
