@@ -1,7 +1,7 @@
 @echo off
 :: ==========================================
 :: Creado por: Eichhh
-:: Versión: 9.3.13 (alch ni me acuerdo, lo ultimo fue la correccion del lock screen y lo de reiniciar)
+:: Versión: 10.0 nueva pantalla de carga y compactacion
 :: ==========================================
 
 :: Deja de ver mi codigo, inche chismoso
@@ -36,7 +36,7 @@ set "GITHUB_USER=azarel22"
 set "GITHUB_REPO=FCA"
 set "GITHUB_BRANCH=main"
 set "SCRIPT_NAME=RTIC_Hub_FCA.bat"
-set "VERSION_ACTUAL=9.3.13"
+set "VERSION_ACTUAL=10.0"
 :: ==========================================
 
 :: --- DEFINICIÓN DE COLORES ---
@@ -51,33 +51,158 @@ set "P141=%ESC%[38;5;141m"
 set "R_ERR=%ESC%[91m"
 set "CYAN=%ESC%[96m"
 set "ORANGE=%ESC%[38;5;208m"
+set "YELL=%ESC%[38;2;255;223;80m"
+set "ON=%ESC%[48;2;255;150;0m%ESC%[38;2;0;0;0m"
+set "OFF=%ESC%[48;2;0;0;0m%ESC%[38;2;18;18;18m"
+set "ERR_COL=%ESC%[48;2;160;0;0m%ESC%[38;2;255;255;255m"
 :: -----------------------------------------------
 
 title RTIC_HUB_FCA
 
 :: ==========================================
-:: 1. VERIFICACION DE INTERNET (ESTRICTO)
+:: PANTALLA DE CARGA + VERIFICACIONES
 :: ==========================================
-cls
-color 0B
-echo.
-echo  [SYSTEM] Verificando conectividad...
-ping -n 1 -w 2000 8.8.8.8 >nul
-if %errorlevel% NEQ 0 goto :SIN_INTERNET
 
-:: ==========================================
-:: 2. VERIFICACION DE ADMINISTRADOR
-:: ==========================================
+mode con: cols=90 lines=32
+echo %ESC%[?25l
+
+set "L0=                                 "
+set "L1= ██████╗ ████████╗██╗  ██████╗   "
+set "L2= ██╔══██╗╚══██╔══╝██║ ██╔════╝   "
+set "L3= ██████╔╝   ██║   ██║ ██║        "
+set "L4= ██╔══██╗   ██║   ██║ ██║        "
+set "L5= ██║  ██║   ██║   ██║ ╚██████╗   "
+set "L6= ╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═════╝   "
+set "L7=                                 "
+
+set "H1=                          "
+set "H2= ██╗  ██╗██╗   ██╗██████╗ "
+set "H3= ██║  ██║██║   ██║██╔══██╗"
+set "H4= ███████║██║   ██║██████╔╝"
+set "H5= ██╔══██║██║   ██║██╔══██╗"
+set "H6= ██║  ██║╚██████╔╝██████╔╝"
+set "H7= ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ "
+set "H8=                          "
+
+set "MOD[1]=                       Iniciando nucleo..."
+set "MOD[2]=               Verificando conexion a internet..."
+set "MOD[3]=            Verificando permisos de administrador..."
+set "MOD[4]=                 Consultando Actualizaciones..."
+set "MOD[5]=                 Cargando modulos del sistema..."
+set "MOD[6]=                    Cargando instaladores..."
+set "MOD[7]=                Preparando modulo de pantalla..."
+set "MOD[8]=                     Cargando optimizador..."
+set "MOD[9]=                    Verificando licencias..."
+set "MOD[10]=                       Preparando menus..."
+set "MOD[11]=                Aplicando configuracion visual..."
+set "MOD[12]=              Verificando integridad del sistema..."
+set "MOD[13]=                             Listo."
+
+:: PRE-CHECKS silenciosos
+set "FLAG_INTERNET=OK"
+ping -n 1 -w 2000 8.8.8.8 >nul 2>&1
+if %errorlevel% NEQ 0 set "FLAG_INTERNET=FAIL"
+
+set "FLAG_ADMIN=OK"
 net session >nul 2>&1
-if %errorLevel% == 0 goto :ES_ADMIN
+if %errorlevel% NEQ 0 set "FLAG_ADMIN=FAIL"
 
-:NO_ADMIN
-color 0C
-cls
+set "FLAG_UPDATE=OK"
+set "VERSION_REMOTA="
+if "%FLAG_INTERNET%"=="OK" (
+    if not "%1"=="skipupdate" (
+        if not exist "%TEMP%\RTIC_Updates" mkdir "%TEMP%\RTIC_Updates" >nul 2>&1
+        curl -L -s -f "https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/refs/heads/main/version.txt" -o "%TEMP%\RTIC_Updates\version.txt" 2>nul
+        curl -L -s -f "https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/refs/heads/main/changelog.txt" -o "%TEMP%\RTIC_Updates\changelog.txt" 2>nul
+        for /f "usebackq tokens=*" %%a in ("%TEMP%\RTIC_Updates\version.txt") do (
+            if "!VERSION_REMOTA!"=="" set "VERSION_REMOTA=%%a"
+        )
+        if not "!VERSION_REMOTA!"=="" (
+            if not "%VERSION_ACTUAL%"=="!VERSION_REMOTA!" set "FLAG_UPDATE=NEW"
+        )
+    )
+)
+
+:: LOOP DE ANIMACION
+for /L %%S in (1,1,13) do (
+
+    set /a "COLS_ON=%%S * 2"
+    set "BLOQUE=!ON!"
+
+    if "!FLAG_INTERNET!"=="FAIL" if %%S GEQ 2 set "BLOQUE=!ERR_COL!"
+    if "!FLAG_ADMIN!"=="FAIL"    if %%S GEQ 3 set "BLOQUE=!ERR_COL!"
+    if "!FLAG_UPDATE!"=="NEW"    if %%S GEQ 4 set "BLOQUE=%ESC%[48;2;255;223;80m%ESC%[38;2;0;0;0m"
+
+    for /L %%R in (1,1,8) do (
+        set "HROW=!H%%R!"
+        call set "LEFT=%%HROW:~0,!COLS_ON!%%"
+        call set "RIGHT=%%HROW:~!COLS_ON!%%"
+        set "ROW%%R=!BLOQUE!!LEFT!!RST!!OFF!!RIGHT!!RST!"
+    )
+
+    cls
+    echo.
+    echo.
+    echo !CW!!L0!  !ROW1! !CW!fca!RST!
+    echo !CW!!L1!  !ROW2!!RST!
+    echo !CW!!L2!  !ROW3!!RST!
+    echo !CW!!L3!  !ROW4!!RST!
+    echo !CW!!L4!  !ROW5!!RST!
+    echo !CW!!L5!  !ROW6!!RST!
+    echo !CW!!L6!  !ROW7!!RST!
+    echo !CW!!L7!  !ROW8!!RST!
+    echo.
+    echo                       !CG!Creado por: Eichhh!RST!
+    echo                         !CG!Version: %VERSION_ACTUAL%!RST!
+    echo.
+    echo !CG!!MOD[%%S]!!RST!
+
+    set "DELAY=250"
+    if %%S EQU 2 if "!FLAG_INTERNET!"=="FAIL" set "DELAY=1500"
+    if %%S EQU 3 if "!FLAG_ADMIN!"=="FAIL"    set "DELAY=1500"
+    if %%S EQU 4 if "!FLAG_UPDATE!"=="NEW"    set "DELAY=1500"
+    ping -n 1 -w !DELAY! 127.255.255.255 >nul
+
+    if %%S EQU 2 if "!FLAG_INTERNET!"=="FAIL" goto :ERROR_INTERNET
+    if %%S EQU 3 if "!FLAG_ADMIN!"=="FAIL"    goto :ERROR_ADMIN
+    if %%S EQU 4 if "!FLAG_UPDATE!"=="NEW"    goto :AVISO_UPDATE
+)
+
+echo %ESC%[?25h
+goto :MENU_PRINCIPAL
+
+:: -------------------------------------------------------
+:: HANDLER: SIN INTERNET
+:: -------------------------------------------------------
+:ERROR_INTERNET
+echo %ESC%[?25h
 echo.
-echo ======================================================
-echo    [ERROR] NECESITAS PERMISOS DE ADMINISTRADOR
-echo ======================================================
+echo %R_ERR%════════════════════════════════════════════════════════════%RST%
+echo %R_ERR%       ERROR: NO SE DETECTA CONEXION A INTERNET%RST%
+echo %R_ERR%════════════════════════════════════════════════════════════%RST%
+echo.
+echo    No se recibio respuesta de los servidores.
+echo    Es necesario internet para descargar los recursos.
+echo.
+echo    ¿Deseas ir al menu de redes para intentar
+echo    restablecer la conexion?
+echo.
+echo    [1] SI, Entrar al menu de redes
+echo    [2] NO, Salir del programa
+echo.
+set /p "redfix=%CYAN%Selecciona una opcion: %RST%"
+if "%redfix%"=="1" goto :SUBMENU_REDES
+exit
+
+:: -------------------------------------------------------
+:: HANDLER: SIN ADMIN
+:: -------------------------------------------------------
+:ERROR_ADMIN
+echo %ESC%[?25h
+echo.
+echo %R_ERR%════════════════════════════════════════════════════════════%RST%
+echo %R_ERR%       ERROR: SE REQUIEREN PERMISOS DE ADMINISTRADOR%RST%
+echo %R_ERR%════════════════════════════════════════════════════════════%RST%
 echo.
 echo    Windows requiere permisos elevados para modificar
 echo    las politicas de seguridad.
@@ -87,222 +212,59 @@ echo.
 pause
 exit
 
-:SIN_INTERNET
-cls
+:: -------------------------------------------------------
+:: HANDLER: ACTUALIZACION DISPONIBLE
+:: -------------------------------------------------------
+:AVISO_UPDATE
+echo %ESC%[?25h
 echo.
-echo %R_ERR%======================================================
-echo      [ERROR] NO SE DETECTA CONEXION A INTERNET
-echo ======================================================%CW%
-echo.
-echo    No se recibio respuesta de internet
-echo    Es necesario internet para descargar los recursos.
-echo.
-echo    ¿Deseas ir al menu de redes para intentar
-echo    restablecer la conexion?
-echo.
-echo    [1] SI, Entrar al menu de redes
-echo    [2] NO, Salir del programa
-echo.
-set /p redfix="%CYAN%Selecciona una opcion: %RST%"
-
-if "%redfix%"=="1" goto :SUBMENU_REDES
-exit
-
-:ES_ADMIN
-color 0B
-
-:: ==========================================
-:: VERIFICAR ACTUALIZACIONES AL INICIO
-:: ==========================================
-if "%1"=="skipupdate" goto :SKIP_UPDATE_CHECK
-
-cls
-echo.
-echo [AUTO-UPDATE] Verificando actualizaciones...
-echo.
-
-:: Crear carpeta temporal si no existe
-if not exist "%TEMP%\RTIC_Updates" mkdir "%TEMP%\RTIC_Updates" >nul 2>&1
-
-:: Descargar archivo de versión desde GitHub
-echo   - Consultando repositorio GitHub...
-curl -L -s -f "https://raw.githubusercontent.com/azarel22/FCA/refs/heads/main/version.txt" -o "%TEMP%\RTIC_Updates\version.txt" 2>nul
-:: Descargar changelog
-curl -L -s -f "https://raw.githubusercontent.com/azarel22/FCA/refs/heads/main/changelog.txt" -o "%TEMP%\RTIC_Updates\changelog.txt" 2>nul
-
-if errorlevel 1 (
-    echo   [AVISO] No se pudo verificar actualizaciones.
-    echo   Continuando con version actual: %VERSION_ACTUAL%
-    timeout /t 2 /nobreak >nul
-    goto :SKIP_UPDATE_CHECK
-)
-
-:: Leer versión desde el archivo descargado
-set "VERSION_REMOTA="
-for /f "usebackq tokens=*" %%a in ("%TEMP%\RTIC_Updates\version.txt") do (
-    set "VERSION_REMOTA=%%a"
-    goto :version_leida
-)
-:version_leida
-
-if "%VERSION_REMOTA%"=="" (
-    echo   [AVISO] No se pudo leer la version remota.
-    timeout /t 2 /nobreak >nul
-    goto :SKIP_UPDATE_CHECK
-)
-
-echo.
-
-:: Comparar versiones
-if "%VERSION_ACTUAL%"=="%VERSION_REMOTA%" (
-    echo   [OK] Ya tienes la ultima version instalada.
-    timeout /t 2 /nobreak >nul
-    goto :SKIP_UPDATE_CHECK
-)
-
-:: Nueva versión disponible
-echo ════════════════════════════════════════════════════════════
-echo       ¡NUEVA VERSION DISPONIBLE!
-echo ════════════════════════════════════════════════════════════
-echo.
-echo   Version actual:      %VERSION_ACTUAL%
-echo   Nueva version:       %VERSION_REMOTA%
-echo.
-echo ════════════════════════════════════════════════════════════
-echo   NOVEDADES:
-echo ════════════════════════════════════════════════════════════
-for /f "usebackq tokens=*" %%l in ("%TEMP%\RTIC_Updates\changelog.txt") do (
-    echo   %%l
-)
-echo ════════════════════════════════════════════════════════════
-echo.
-echo ¿Deseas actualizar ahora?
+echo %YELL%════════════════════════════════════════════════════════════%RST%
+echo %YELL%   NUEVA VERSION DISPONIBLE!%RST%
+echo %YELL%   Version actual:   %CW%%VERSION_ACTUAL%%RST%
+echo %YELL%   Nueva version:    %CW%%VERSION_REMOTA%%RST%
+echo %YELL%════════════════════════════════════════════════════════════%RST%
+echo %YELL%   NOVEDADES:%RST%
+echo %YELL%════════════════════════════════════════════════════════════%RST%
+for /f "usebackq tokens=*" %%l in ("%TEMP%\RTIC_Updates\changelog.txt") do echo    %%l
+echo %YELL%════════════════════════════════════════════════════════════%RST%
 echo.
 echo    [1] SI - Descargar e instalar actualizacion
 echo    [2] NO - Continuar con la version actual
 echo.
-set /p update_choice="Selecciona una opcion: "
-
-if not "%update_choice%"=="1" (
-    echo.
-    echo [INFO] Actualizacion omitida. Continuando...
-    timeout /t 2 /nobreak >nul
-    goto :SKIP_UPDATE_CHECK
-)
-
-:: Proceder con la actualización
-goto :PROCESAR_ACTUALIZACION
-
-:PROCESAR_ACTUALIZACION
-cls
+set /p "update_choice=%CYAN%Selecciona una opcion: %RST%"
+if "!update_choice!"=="1" goto :PROCESAR_ACTUALIZACION
 echo.
-echo ════════════════════════════════════════════════════════════
-echo             ACTUALIZANDO RTIC HUB FCA
-echo ════════════════════════════════════════════════════════════
-echo.
-
-:: Obtener ruta completa del script actual
-set "SCRIPT_PATH=%~f0"
-set "SCRIPT_DIR=%~dp0"
-
-echo [1/4] Descargando nueva version...
-curl -L -s -f "https://raw.githubusercontent.com/azarel22/FCA/refs/heads/main/RTIC_Hub_FCA.bat" -o "%TEMP%\RTIC_Updates\nueva_version.bat"
-
-if errorlevel 1 (
-    echo.
-    echo [ERROR] No se pudo descargar la actualizacion.
-    echo Verifica tu conexion a internet.
-    echo.
-    pause
-    goto :SKIP_UPDATE_CHECK
-)
-
-echo   ✓ Descarga completada
-echo.
-echo [2/4] Creando respaldo de version actual...
-copy "%SCRIPT_PATH%" "%SCRIPT_DIR%RTIC_Hub_FCA_backup_%VERSION_ACTUAL%.bat" >nul 2>&1
-echo   ✓ Respaldo creado: RTIC_Hub_FCA_backup_%VERSION_ACTUAL%.bat
-echo.
-
-echo [3/4] Preparando instalacion...
-
-:: Crear script de actualización temporal
-echo @echo off > "%TEMP%\RTIC_Updates\update_script.bat"
-echo timeout /t 2 /nobreak ^>nul >> "%TEMP%\RTIC_Updates\update_script.bat"
-echo copy /y "%TEMP%\RTIC_Updates\nueva_version.bat" "%SCRIPT_PATH%" ^>nul 2^>^&1 >> "%TEMP%\RTIC_Updates\update_script.bat"
-echo if errorlevel 1 ( >> "%TEMP%\RTIC_Updates\update_script.bat"
-echo     echo ERROR: No se pudo reemplazar el archivo. >> "%TEMP%\RTIC_Updates\update_script.bat"
-echo     pause >> "%TEMP%\RTIC_Updates\update_script.bat"
-echo     exit >> "%TEMP%\RTIC_Updates\update_script.bat"
-echo ) >> "%TEMP%\RTIC_Updates\update_script.bat"
-echo del "%TEMP%\RTIC_Updates\nueva_version.bat" ^>nul 2^>^&1 >> "%TEMP%\RTIC_Updates\update_script.bat"
-echo start "" "%SCRIPT_PATH%" skipupdate >> "%TEMP%\RTIC_Updates\update_script.bat"
-echo exit >> "%TEMP%\RTIC_Updates\update_script.bat"
-
-echo   ✓ Script de instalacion preparado
-echo.
-echo [4/4] Aplicando actualizacion...
-echo.
-echo La aplicacion se reiniciara automaticamente.
-timeout /t 3 /nobreak >nul
-
-:: Ejecutar script de actualización y salir
-start /min "" "%TEMP%\RTIC_Updates\update_script.bat"
-exit
-
-:SKIP_UPDATE_CHECK
-
-:: ==========================================
-:: PANTALLA DE CARGA
-:: ==========================================
-
-:: Aumentamos tamaño de ventana para el logo
-mode con: cols=90 lines=30
-
-:: Ocultar cursor
+echo [INFO] Actualizacion omitida. Continuando...
+timeout /t 2 /nobreak >nul
 echo %ESC%[?25l
-
-set "L1=                                  %CH%                          %RST%%CW% fca%RST%"
-set "L2= %CW%██████╗ ████████╗██╗  ██████╗    %CH% ██╗  ██╗██╗   ██╗██████╗ %RST%"
-set "L3= %CW%██╔══██╗╚══██╔══╝██║ ██╔════╝    %CH% ██║  ██║██║   ██║██╔══██╗%RST%"
-set "L4= %CW%██████╔╝   ██║   ██║ ██║         %CH% ███████║██║   ██║██████╔╝%RST%"
-set "L5= %CW%██╔══██╗   ██║   ██║ ██║         %CH% ██╔══██║██║   ██║██╔══██╗%RST%"
-set "L6= %CW%██║  ██║   ██║   ██║ ╚██████╗    %CH% ██║  ██║╚██████╔╝██████╔╝%RST%"
-set "L7= %CW%╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═════╝    %CH% ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ %RST%"
-set "L8=                                  %CH%                          %RST%"
-
-:: --- BUCLE DE CARGA ---
-set "BARRA="
-set "TOTAL_STEPS=13"
-
-for /L %%i in (1,1,%TOTAL_STEPS%) do (
+for /L %%S in (5,1,13) do (
+    set /a "COLS_ON=%%S * 2"
+    for /L %%R in (1,1,8) do (
+        set "HROW=!H%%R!"
+        call set "LEFT=%%HROW:~0,!COLS_ON!%%"
+        call set "RIGHT=%%HROW:~!COLS_ON!%%"
+        set "ROW%%R=!ON!!LEFT!!RST!!OFF!!RIGHT!!RST!"
+    )
     cls
     echo.
     echo.
-    echo %L1%
-    echo %L2%
-    echo %L3%
-    echo %L4%
-    echo %L5%
-    echo %L6%
-    echo %L7%
-    echo %L8%
+    echo !CW!!L0!  !ROW1! !CW!fca!RST!
+    echo !CW!!L1!  !ROW2!!RST!
+    echo !CW!!L2!  !ROW3!!RST!
+    echo !CW!!L3!  !ROW4!!RST!
+    echo !CW!!L4!  !ROW5!!RST!
+    echo !CW!!L5!  !ROW6!!RST!
+    echo !CW!!L6!  !ROW7!!RST!
+    echo !CW!!L7!  !ROW8!!RST!
     echo.
-    echo                      %CG%Creado por: Eichhh%RST%
-    echo                        %CG%Version: %VERSION_ACTUAL%%RST%
+    echo                       !CG!Creado por: Eichhh!RST!
+    echo                         !CG!Version: %VERSION_ACTUAL%!RST!
     echo.
-    
-    :: Logica de barra de progreso
-    set "BARRA=!BARRA!██"
-    echo                  %ORANGE%!BARRA!%RST%                     
-    echo                  Cargando modulos...  %%i/13
-    
-    ping -n 1 -w 200 127.255.255.255 >nul
+    echo !CG!!MOD[%%S]!!RST!
+    ping -n 1 -w 250 127.255.255.255 >nul
 )
-
 echo %ESC%[?25h
 goto :MENU_PRINCIPAL
-
 
 :: ==========================================
 :: 3. MENU PRINCIPAL (JERARQUICO)
@@ -310,9 +272,9 @@ goto :MENU_PRINCIPAL
 :MENU_PRINCIPAL
 color 0B
 cls
-echo ========================================================
-echo        SISTEMA DE GESTION FCA - UAEMEX
-echo ========================================================
+echo ════════════════════════════════════════════════════════
+echo             SISTEMA DE GESTION FCA - UAEMEX
+echo ════════════════════════════════════════════════════════
 echo.
 echo    Selecciona una categoria:
 echo.
@@ -339,7 +301,7 @@ echo        - Reiniciar/cerrar sesion
 echo.
 echo    [8] SALIR
 echo.
-echo --------------------------------------------------------
+echo ════════════════════════════════════════════════════════
 set /p opcion="Escribe el numero y presiona Enter: "
 
 if "%opcion%"=="1" goto :EN_DESARROLLO
@@ -358,9 +320,9 @@ goto :MENU_PRINCIPAL
 :EN_DESARROLLO
 cls
 echo.
-echo ======================================================
-echo        MODULO EN FASE DE DESARROLLO
-echo ======================================================
+echo ════════════════════════════════════════════════════════
+echo             MODULO EN FASE DE DESARROLLO
+echo ════════════════════════════════════════════════════════
 echo.
 echo    Esta funcion estara disponible en la proxima
 echo    actualizacion del script.
@@ -373,9 +335,9 @@ goto :MENU_PRINCIPAL
 :: ==========================================
 :SUBMENU_PANTALLA
 cls
-echo ========================================================
-echo        GESTION DE PANTALLA Y APARIENCIA
-echo ========================================================
+echo ════════════════════════════════════════════════════════
+echo            GESTION DE PANTALLA Y APARIENCIA
+echo ════════════════════════════════════════════════════════
 echo.
 echo    [1] MODO INSTITUCIONAL (Recomendado)(EN DESARROLLO)
 echo        - Descarga fondo FCA, lo aplica y bloquea cambios.
@@ -393,7 +355,7 @@ echo        - Crea la carpeta donde se almacenan
 echo.
 echo    [5] Volver al Menu Principal
 echo.
-echo --------------------------------------------------------
+echo ════════════════════════════════════════════════════════
 set /p subop="Selecciona opcion: "
 
 if "%subop%"=="1" goto :EN_DESARROLLO
@@ -404,7 +366,6 @@ if "%subop%"=="5" goto :MENU_PRINCIPAL
 goto :SUBMENU_PANTALLA
 
 :: --- LÓGICA DE PANTALLA ---
-
 
 :PANTALLA_INSTITUCIONAL
 cls
@@ -502,7 +463,6 @@ gpupdate /force >nul 2>&1
 start explorer.exe
 goto :EXITO_RETORNO
 
-
 :Fondos
 cls
 echo.
@@ -519,15 +479,14 @@ start "" "C:\Archivos_FCA_UAEMEX"
 
 goto :EXITO_RETORNO
 
-
 :: ==========================================
 :: SECCION 3: OPTIMIZADOR DEL SISTEMA
 :: ==========================================
 :SUBMENU_OPTIMIZADOR
 cls
-echo ========================================================
-echo        OPTIMIZADOR DE RENDIMIENTO Y ARRANQUE
-echo ========================================================
+echo ════════════════════════════════════════════════════════
+echo          OPTIMIZADOR DE RENDIMIENTO Y ARRANQUE
+echo ════════════════════════════════════════════════════════
 echo.
 echo    [1] APLICAR OPTIMIZACION (MAX RENDIMIENTO + FUENTES)
 echo        - Boot: Activa TODOS los procesadores (%NUMBER_OF_PROCESSORS%).
@@ -540,7 +499,7 @@ echo        - Visual: "Dejar que Windows elija".
 echo.
 echo    [3] Volver al Menu Principal
 echo.
-echo --------------------------------------------------------
+echo ════════════════════════════════════════════════════════
 set /p subop="Selecciona opcion: "
 
 if "%subop%"=="1" goto :APLICAR_OPTIMIZACION
@@ -604,21 +563,19 @@ echo.
 pause
 goto :MENU_PRINCIPAL
 
-
-
 :: ==========================================
 :: SECCION 4: SUBMENU REDES
 :: ==========================================
 :SUBMENU_REDES
 cls
 echo %P141%
-echo ========================================================
-echo        GESTION DE REDES Y CONECTIVIDAD
-echo ========================================================
+echo ════════════════════════════════════════════════════════
+echo             GESTION DE REDES Y CONECTIVIDAD
+echo ════════════════════════════════════════════════════════
 echo.
 echo    [1] BLOQUEAR ZONA DE COBERTURA (Mobile Hotspot)
 echo        - Evita que el usuario comparta internet por WiFi.
-echo        - Bloquea regedit para los que intentan activar la zona nuevamente.
+echo        - Bloquea regedit.
 echo.
 echo    [2] PERMITIR ZONA DE COBERTURA (Desbloquear)
 echo        - Restaura la opcion de compartir internet.
@@ -629,7 +586,7 @@ echo        - Asignar IP Estatica, Mascara, Gateway y DNS.
 echo.
 echo    [4] Volver al Menu Principal
 echo.
-echo --------------------------------------------------------
+echo ════════════════════════════════════════════════════════
 set /p subop="Selecciona opcion: "
 
 if "%subop%"=="1" goto :RED_BLOQUEAR_HOTSPOT
@@ -684,9 +641,9 @@ goto :EXITO_RETORNO
 :RED_CONFIG_IP
 cls
 echo %P141%
-echo ========================================================
+echo ════════════════════════════════════════════════════════
 echo         ASISTENTE DE CONFIGURACION IP (MANUAL)
-echo ========================================================
+echo ════════════════════════════════════════════════════════
 echo.
 echo [1/5] Identificando interfaces de red...
 echo.
@@ -697,9 +654,9 @@ echo.
 set /p ADAPTADOR="%CW%Nombre de la interfaz: %P141%"
 
 cls
-echo ========================================================
-echo         CONFIGURANDO: %ADAPTADOR%
-echo ========================================================
+echo ════════════════════════════════════════════════════════
+echo               CONFIGURANDO: %ADAPTADOR%
+echo ════════════════════════════════════════════════════════
 echo.
 echo [2/5] Ingresa los datos de conexion...
 echo.
@@ -712,15 +669,15 @@ set /p DNS1="%CW%   - DNS Preferido: %P141%"
 set /p DNS2="%CW%   - DNS Alternativo: %P141%"
 
 cls
-echo ========================================================
+echo ════════════════════════════════════════════════════════
 echo                   RESUMEN DE DATOS
-echo ========================================================
+echo ════════════════════════════════════════════════════════
 echo.
 echo     Interfaz : %ADAPTADOR%
 echo     IP       : %IP%
 echo     DNS 1    : %DNS1%
 echo.
-echo --------------------------------------------------------
+echo ════════════════════════════════════════════════════════
 echo %CW%Presiona ENTER para aplicar cambios...%P141%
 pause >nul
 
@@ -733,7 +690,7 @@ netsh interface ip set dns name="%ADAPTADOR%" static %DNS1% >nul 2>&1
 netsh interface ip add dns name="%ADAPTADOR%" %DNS2% index=2 >nul 2>&1
 
 echo.
-echo --------------------------------------------------------
+echo ════════════════════════════════════════════════════════
 echo %CW%PROCESO FINALIZADO. Probando conexion...%P141%
 ping 8.8.8.8 -n 2
 echo.
@@ -742,17 +699,15 @@ pause
 echo %RST%
 goto :MENU_PRINCIPAL
 
-
-
 :: ==========================================
 :: SECCION 5: SUBMENU ACTIVACION
 :: ==========================================
 :ACTIVACION
 color 0B
 cls
-echo ========================================================
-echo        CENTRO DE LICENCIAS Y ACTIVACION
-echo ========================================================
+echo ════════════════════════════════════════════════════════
+echo             CENTRO DE LICENCIAS Y ACTIVACION
+echo ════════════════════════════════════════════════════════
 echo.
 echo    [1] INSTALAR KEY OFFICE LTSC 2021
 echo        - Instala la clave para Office Pro Plus 2021.
@@ -764,7 +719,7 @@ echo        - Opciones para Windows, HWID, KMS38, etc.
 echo.
 echo    [3] Volver al Menu Principal
 echo.
-echo --------------------------------------------------------
+echo ════════════════════════════════════════════════════════
 set /p actop="Selecciona opcion: "
 
 if "%actop%"=="1" goto :KEY_OFFICE_2021
@@ -820,7 +775,6 @@ echo [PROCESO] Script ejecutado en segunda ventana.
 pause
 goto :ACTIVACION
 
-
 :: ==========================================
 :: VERIFICACION MANUAL DE ACTUALIZACIONES
 :: ==========================================
@@ -873,32 +827,30 @@ if "%VERSION_ACTUAL%"=="%VERSION_REMOTA%" (
 )
 
 :: Nueva versión disponible
-echo ════════════════════════════════════════════════════════════
-echo       ¡NUEVA VERSION DISPONIBLE!
-echo ════════════════════════════════════════════════════════════
-echo.
-echo   Version actual:      %VERSION_ACTUAL%
-echo   Nueva version:       %VERSION_REMOTA%
-echo.
-echo ════════════════════════════════════════════════════════════
-echo.
-echo ¿Deseas actualizar ahora?
+echo %YELL%════════════════════════════════════════════════════════════%RST%
+echo %YELL%   NUEVA VERSION DISPONIBLE!%RST%
+echo %YELL%   Version actual:   %CW%%VERSION_ACTUAL%%RST%
+echo %YELL%   Nueva version:    %CW%%VERSION_REMOTA%%RST%
+echo %YELL%════════════════════════════════════════════════════════════%RST%
+echo %YELL%   NOVEDADES:%RST%
+echo %YELL%════════════════════════════════════════════════════════════%RST%
+for /f "usebackq tokens=*" %%l in ("%TEMP%\RTIC_Updates\changelog.txt") do echo    %%l
+echo %YELL%════════════════════════════════════════════════════════════%RST%
 echo.
 echo    [1] SI - Descargar e instalar actualizacion
 echo    [2] NO - Volver al menu principal
 echo.
-set /p update_choice_manual="Selecciona una opcion: "
+set /p update_choice_manual="%CYAN%Selecciona una opcion: %RST%"
 
 if "%update_choice_manual%"=="1" goto :PROCESAR_ACTUALIZACION
 goto :MENU_PRINCIPAL
 
-
 :OPCIONES_SISTEMA
 cls
 echo.
-echo ========================================
-echo        OPCIONES DEL SISTEMA
-echo ========================================
+echo ════════════════════════════════════════════════════════
+echo                  OPCIONES DEL SISTEMA
+echo ════════════════════════════════════════════════════════
 echo.
 echo  [1] Reiniciar equipo
 echo  [2] Cerrar sesion
@@ -923,16 +875,15 @@ echo Cerrando sesion...
 shutdown /l
 goto :EOF
 
-
 :: ==========================================
 :: FINAL COMUN
 :: ==========================================
 :EXITO_RETORNO
 cls
 echo.
-echo ========================================================
-echo          OPERACION COMPLETADA CON EXITO
-echo ========================================================
+echo ════════════════════════════════════════════════════════
+echo             OPERACION COMPLETADA CON EXITO
+echo ════════════════════════════════════════════════════════
 echo.
 echo ⠀⠀⠀⠀⠀⣴⠉⡙⠳⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣠⠤⣚⡯⠴⢬⣱⡀⠀
 echo ⠀⠀⠀⠀⢰⡇⣷⡌⢲⣄⡑⢢⡀⠀⠀⠀⠀⠀⢠⠾⢋⠔⣨⣴⣿⣷⡌⠇⡇⠀
