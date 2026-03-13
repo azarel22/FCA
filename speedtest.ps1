@@ -1,91 +1,89 @@
-# =============================================
-# SPEED TEST - RTIC HUB FCA
-# =============================================
-
-$ESC = [char]27
-$CYAN    = "$ESC[96m"
-$GREEN   = "$ESC[92m"
-$YELLOW  = "$ESC[93m"
-$RED     = "$ESC[91m"
-$WHITE   = "$ESC[97m"
-$GRAY    = "$ESC[90m"
-$ORANGE  = "$ESC[38;5;208m"
-$MINT    = "$ESC[38;2;80;255;180m"
-$BOLD    = "$ESC[1m"
-$RST     = "$ESC[0m"
-$LBLUE   = "$ESC[38;2;100;200;255m"
-
 $host.UI.RawUI.WindowTitle = 'Speed Test - RTIC HUB'
+try {
+    $size = $host.UI.RawUI.WindowSize
+    $size.Width = 90
+    $size.Height = 42
+    $host.UI.RawUI.WindowSize = $size
+    $buf = $host.UI.RawUI.BufferSize
+    $buf.Width = 90
+    $host.UI.RawUI.BufferSize = $buf
+} catch {}
+
 Clear-Host
+
+$ESC    = [char]27
+$CYAN   = "$ESC[96m"
+$GREEN  = "$ESC[92m"
+$YELLOW = "$ESC[93m"
+$RED    = "$ESC[91m"
+$WHITE  = "$ESC[97m"
+$GRAY   = "$ESC[90m"
+$ORANGE = "$ESC[38;5;208m"
+$BOLD   = "$ESC[1m"
+$RST    = "$ESC[0m"
+$LBLUE  = "$ESC[38;2;100;200;255m"
+$SEP    = "  ============================================================"
 
 function Draw-Header {
     Write-Host ""
-    Write-Host "  $ORANGE$BOLD════════════════════════════════════════════════════════════$RST"
+    Write-Host "$ORANGE$BOLD$SEP$RST"
     Write-Host "  $WHITE$BOLD  SPEED TEST$RST  $LBLUE- Velocidad de Conexion$RST"
-    Write-Host "  $GRAY  Bajada  /  Subida  /  Latencia$RST"
-    Write-Host "  $ORANGE$BOLD════════════════════════════════════════════════════════════$RST"
+    Write-Host "$ORANGE$BOLD$SEP$RST"
     Write-Host ""
 }
 
 function Draw-Section ($titulo, $color) {
-    Write-Host "  $color════════════════════════════════════════════════════════════$RST"
+    Write-Host "$color$SEP$RST"
     Write-Host "  $color$BOLD  $titulo$RST"
-    Write-Host "  $color════════════════════════════════════════════════════════════$RST"
+    Write-Host "$color$SEP$RST"
+    Write-Host ""
 }
 
-function Show-Spinner ($msg, $ms) {
-    $frames = @(
-        "  [=         ]",
-        "  [ =        ]",
-        "  [  =       ]",
-        "  [   =      ]",
-        "  [    =     ]",
-        "  [     =    ]",
-        "  [      =   ]",
-        "  [       =  ]",
-        "  [        = ]",
-        "  [         =]",
-        "  [        = ]",
-        "  [       =  ]",
-        "  [      =   ]",
-        "  [     =    ]",
-        "  [    =     ]",
-        "  [   =      ]",
-        "  [  =       ]",
-        "  [ =        ]"
-    )
+# Animacion de carga con barra que se llena sola (efecto placebo)
+function Show-FakeProgress ($msg, $color, $ms) {
+    $total = 40
+    $steps = 60
+    $delay = [math]::Round($ms / $steps)
+    for ($p = 0; $p -le $steps; $p++) {
+        $pct    = [math]::Round($p / $steps * 100)
+        $filled = [math]::Round($p / $steps * $total)
+        $empty  = $total - $filled
+        $bar    = ($color + ("#" * $filled) + $GRAY + ("-" * $empty) + $RST)
+        Write-Host "`r  $GRAY$msg$RST  [ $bar ] $WHITE$BOLD$pct%$RST   " -NoNewline
+        Start-Sleep -Milliseconds $delay
+    }
+    Write-Host ""
+}
+
+# Animacion de "calculando" con puntos pulsantes
+function Show-Calculating ($ms) {
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
+    $frames = @(
+        "  Calculando         ",
+        "  Calculando .       ",
+        "  Calculando . .     ",
+        "  Calculando . . .   ",
+        "  Calculando . . . . "
+    )
     $i = 0
     while ($sw.ElapsedMilliseconds -lt $ms) {
-        $frame = $frames[$i % $frames.Length]
-        Write-Host "`r  $CYAN$frame$RST  $GRAY$msg$RST   " -NoNewline
-        Start-Sleep -Milliseconds 60
+        Write-Host "`r$CYAN$($frames[$i % $frames.Length])$RST" -NoNewline
+        Start-Sleep -Milliseconds 200
         $i++
     }
-    Write-Host "`r                                                            " -NoNewline
+    Write-Host "`r                                    " -NoNewline
     Write-Host "`r" -NoNewline
 }
 
-function Show-ProgressBar ($pct, $color) {
-    $total = 40
-    $filled = [math]::Round($pct / 100 * $total)
-    $empty = $total - $filled
-    $bar = ("$color" + [string]::new([char]0x2588, $filled) + "$GRAY" + [string]::new([char]0x2591, $empty) + "$RST")
-    Write-Host "  [ $bar ] $WHITE$pct%$RST" -NoNewline
-}
-
-# ─── HEADER ───
 Draw-Header
 
-# ─────────────────────────────────────────────
+# ─────────────────────────
 # [1/3] LATENCIA
-# ─────────────────────────────────────────────
+# ─────────────────────────
 Draw-Section "[1/3]  LATENCIA" $CYAN
-Write-Host ""
 
 $srv = $null
-$servidores = @('8.8.8.8','1.1.1.1','9.9.9.9')
-foreach ($s in $servidores) {
+foreach ($s in @('8.8.8.8','1.1.1.1','9.9.9.9')) {
     ping -n 1 -w 1000 $s 2>$null | Out-Null
     if ($LASTEXITCODE -eq 0) { $srv = $s; break }
 }
@@ -93,8 +91,6 @@ foreach ($s in $servidores) {
 if (-not $srv) {
     Write-Host "  $YELLOW  ! Ping bloqueado o sin respuesta - continuando...$RST"
 } else {
-    Write-Host "  $GRAY  Servidor seleccionado : $WHITE$srv$RST"
-    Write-Host ""
     $ok = 0
     $tiempos = @()
     for ($i = 1; $i -le 4; $i++) {
@@ -107,59 +103,47 @@ if (-not $srv) {
             $tiempos += $ms_val
             Write-Host "  $GREEN  Ping $i  >>  OK  $GRAY($ms_val ms)$RST"
         } else {
-            Write-Host "  $YELLOW  Ping $i  >>  sin respuesta$RST"
+            Write-Host "  $YELLOW  Ping $i  >>  timeout$RST"
         }
     }
     Write-Host ""
     if ($tiempos.Count -gt 0) {
         $avg = [math]::Round(($tiempos | Measure-Object -Average).Average, 0)
-        Write-Host "  $CYAN  Latencia promedio : $WHITE$BOLD$avg ms$RST   $GRAY(paquetes OK: $ok/4)$RST"
+        Write-Host "  $CYAN  Latencia promedio : $WHITE$BOLD$avg ms$RST   $GRAY(OK: $ok/4)$RST"
     }
 }
-
 Write-Host ""
 
-# ─────────────────────────────────────────────
+# ─────────────────────────
 # [2/3] BAJADA
-# ─────────────────────────────────────────────
+# ─────────────────────────
 Draw-Section "[2/3]  BAJADA  (Download)" $GREEN
-Write-Host ""
-Write-Host "  $GRAY  Descargando 50 MB desde Cloudflare...$RST"
-Write-Host ""
 
 $DL = 0
 try {
-    $wc = New-Object System.Net.WebClient
-    $sw = [System.Diagnostics.Stopwatch]::StartNew()
-    Show-Spinner "Midiendo bajada..." 300
+    $wc  = New-Object System.Net.WebClient
+    $sw  = [System.Diagnostics.Stopwatch]::StartNew()
     $data = $wc.DownloadData('https://speed.cloudflare.com/__down?bytes=52428800')
     $sw.Stop()
-    $DL = [math]::Round(($data.Length * 8) / ($sw.Elapsed.TotalMilliseconds * 1000), 1)
+    $DL  = [math]::Round(($data.Length * 8) / ($sw.Elapsed.TotalMilliseconds * 1000), 1)
     $data = $null
+    Show-FakeProgress "Analizando bajada..." $GREEN 2000
+    Show-Calculating 1000
     Write-Host "  $GREEN$BOLD  Resultado  >>  $DL Mbps$RST"
-    Write-Host ""
-    $pct = [math]::Min([math]::Round($DL / 300 * 100), 100)
-    Show-ProgressBar $pct $GREEN
-    Write-Host ""
 } catch {
-    Write-Host "  $RED  ERROR en descarga: $_$RST"
+    Write-Host "  $RED  ERROR: $_$RST"
 }
-
 Write-Host ""
 
-# ─────────────────────────────────────────────
+# ─────────────────────────
 # [3/3] SUBIDA
-# ─────────────────────────────────────────────
+# ─────────────────────────
 Draw-Section "[3/3]  SUBIDA  (Upload)" $YELLOW
-Write-Host ""
-Write-Host "  $GRAY  Enviando 10 MB a Cloudflare...$RST"
-Write-Host ""
 
 $UL = 0
 try {
     $uploadBytes = New-Object byte[] 10485760
-    $url = 'https://speed.cloudflare.com/__up'
-    $req = [System.Net.HttpWebRequest]::Create($url)
+    $req = [System.Net.HttpWebRequest]::Create('https://speed.cloudflare.com/__up')
     $req.Method = 'POST'
     $req.ContentType = 'application/octet-stream'
     $req.ContentLength = $uploadBytes.Length
@@ -167,7 +151,6 @@ try {
     $req.SendChunked = $false
     $req.Timeout = 60000
     $sw2 = [System.Diagnostics.Stopwatch]::StartNew()
-    Show-Spinner "Midiendo subida..." 300
     $stream = $req.GetRequestStream()
     $stream.Write($uploadBytes, 0, $uploadBytes.Length)
     $stream.Close()
@@ -175,23 +158,20 @@ try {
     $sw2.Stop()
     $resp.Close()
     $UL = [math]::Round(($uploadBytes.Length * 8) / ($sw2.Elapsed.TotalMilliseconds * 1000), 1)
+    Show-FakeProgress "Analizando subida..." $YELLOW 2000
+    Show-Calculating 1000
     Write-Host "  $YELLOW$BOLD  Resultado  >>  $UL Mbps$RST"
-    Write-Host ""
-    $pct2 = [math]::Min([math]::Round($UL / 100 * 100), 100)
-    Show-ProgressBar $pct2 $YELLOW
-    Write-Host ""
 } catch {
-    Write-Host "  $RED  ERROR subida: $_$RST"
+    Write-Host "  $RED  ERROR: $_$RST"
 }
-
 Write-Host ""
 
-# ─────────────────────────────────────────────
-# RESUMEN FINAL
-# ─────────────────────────────────────────────
-Write-Host "  $ORANGE$BOLD════════════════════════════════════════════════════════════$RST"
+# ─────────────────────────
+# RESUMEN
+# ─────────────────────────
+Write-Host "$ORANGE$BOLD$SEP$RST"
 Write-Host "  $WHITE$BOLD  RESUMEN FINAL$RST"
-Write-Host "  $ORANGE$BOLD════════════════════════════════════════════════════════════$RST"
+Write-Host "$ORANGE$BOLD$SEP$RST"
 Write-Host ""
 Write-Host "  $LBLUE  Bajada   :  $WHITE$BOLD$DL Mbps$RST"
 Write-Host "  $LBLUE  Subida   :  $WHITE$BOLD$UL Mbps$RST"
@@ -206,7 +186,15 @@ elseif ($d -ge 1)   { Write-Host "  $RED$BOLD  Calidad  :  LENTA$RST" }
 else                { Write-Host "  $GRAY  Calidad  :  Sin datos$RST" }
 
 Write-Host ""
-Write-Host "  $ORANGE$BOLD════════════════════════════════════════════════════════════$RST"
+Write-Host "$ORANGE$BOLD$SEP$RST"
 Write-Host ""
 Write-Host "  $GRAY  Prueba completada. Presiona Enter para volver...$RST"
-Read-Host
+
+try {
+    $size2 = $host.UI.RawUI.WindowSize
+    $size2.Width = 90
+    $size2.Height = 42
+    $host.UI.RawUI.WindowSize = $size2
+} catch {}
+
+$null = $host.UI.ReadLine()
