@@ -39,23 +39,33 @@ function Draw-Section ($titulo, $color) {
     Write-Host ""
 }
 
-# Animacion de carga con barra que se llena sola (efecto placebo)
-function Show-FakeProgress ($msg, $color, $ms) {
-    $total = 40
-    $steps = 60
-    $delay = [math]::Round($ms / $steps)
+function Show-FakeProgress ($color, $ms) {
+    $slots  = 30
+    $steps  = $slots * 2
+    $delay  = [math]::Round($ms / $steps)
+    $filled = 0
+
+    # frames de la bolita que rebota dentro de la barra vacia al inicio
     for ($p = 0; $p -le $steps; $p++) {
         $pct    = [math]::Round($p / $steps * 100)
-        $filled = [math]::Round($p / $steps * $total)
-        $empty  = $total - $filled
-        $bar    = ($color + ("#" * $filled) + $GRAY + ("-" * $empty) + $RST)
-        Write-Host "`r  $GRAY$msg$RST  [ $bar ] $WHITE$BOLD$pct%$RST   " -NoNewline
+        $filled = [math]::Round($p / $steps * $slots)
+        $empty  = $slots - $filled
+
+        # segmento lleno con bloque solido + punta brillante
+        if ($filled -gt 0) {
+            $barFull  = ($color + ("=" * ($filled - 1)) + ">" + $RST)
+        } else {
+            $barFull  = ""
+        }
+        $barEmpty = ($GRAY + ("-" * $empty) + $RST)
+
+        $pctStr = "$pct%".PadLeft(4)
+        Write-Host "`r  $WHITE[$RST$barFull$barEmpty$WHITE]$RST $CYAN$BOLD$pctStr$RST  " -NoNewline
         Start-Sleep -Milliseconds $delay
     }
     Write-Host ""
 }
 
-# Animacion de "calculando" con puntos pulsantes
 function Show-Calculating ($ms) {
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
     $frames = @(
@@ -68,10 +78,10 @@ function Show-Calculating ($ms) {
     $i = 0
     while ($sw.ElapsedMilliseconds -lt $ms) {
         Write-Host "`r$CYAN$($frames[$i % $frames.Length])$RST" -NoNewline
-        Start-Sleep -Milliseconds 200
+        Start-Sleep -Milliseconds 180
         $i++
     }
-    Write-Host "`r                                    " -NoNewline
+    Write-Host "`r                          " -NoNewline
     Write-Host "`r" -NoNewline
 }
 
@@ -118,17 +128,19 @@ Write-Host ""
 # [2/3] BAJADA
 # ─────────────────────────
 Draw-Section "[2/3]  BAJADA  (Download)" $GREEN
+Write-Host "  $GRAY  Descargando 50 MB desde Cloudflare...$RST"
+Write-Host ""
 
 $DL = 0
 try {
-    $wc  = New-Object System.Net.WebClient
-    $sw  = [System.Diagnostics.Stopwatch]::StartNew()
+    $wc   = New-Object System.Net.WebClient
+    $sw   = [System.Diagnostics.Stopwatch]::StartNew()
     $data = $wc.DownloadData('https://speed.cloudflare.com/__down?bytes=52428800')
     $sw.Stop()
-    $DL  = [math]::Round(($data.Length * 8) / ($sw.Elapsed.TotalMilliseconds * 1000), 1)
+    $DL   = [math]::Round(($data.Length * 8) / ($sw.Elapsed.TotalMilliseconds * 1000), 1)
     $data = $null
-    Show-FakeProgress "Analizando bajada..." $GREEN 2000
-    Show-Calculating 1000
+    Show-FakeProgress $GREEN 2000
+    Show-Calculating 800
     Write-Host "  $GREEN$BOLD  Resultado  >>  $DL Mbps$RST"
 } catch {
     Write-Host "  $RED  ERROR: $_$RST"
@@ -139,6 +151,8 @@ Write-Host ""
 # [3/3] SUBIDA
 # ─────────────────────────
 Draw-Section "[3/3]  SUBIDA  (Upload)" $YELLOW
+Write-Host "  $GRAY  Enviando 10 MB a Cloudflare...$RST"
+Write-Host ""
 
 $UL = 0
 try {
@@ -150,7 +164,7 @@ try {
     $req.AllowWriteStreamBuffering = $false
     $req.SendChunked = $false
     $req.Timeout = 60000
-    $sw2 = [System.Diagnostics.Stopwatch]::StartNew()
+    $sw2    = [System.Diagnostics.Stopwatch]::StartNew()
     $stream = $req.GetRequestStream()
     $stream.Write($uploadBytes, 0, $uploadBytes.Length)
     $stream.Close()
@@ -158,8 +172,8 @@ try {
     $sw2.Stop()
     $resp.Close()
     $UL = [math]::Round(($uploadBytes.Length * 8) / ($sw2.Elapsed.TotalMilliseconds * 1000), 1)
-    Show-FakeProgress "Analizando subida..." $YELLOW 2000
-    Show-Calculating 1000
+    Show-FakeProgress $YELLOW 2000
+    Show-Calculating 800
     Write-Host "  $YELLOW$BOLD  Resultado  >>  $UL Mbps$RST"
 } catch {
     Write-Host "  $RED  ERROR: $_$RST"
@@ -189,12 +203,5 @@ Write-Host ""
 Write-Host "$ORANGE$BOLD$SEP$RST"
 Write-Host ""
 Write-Host "  $GRAY  Prueba completada. Presiona Enter para volver...$RST"
-
-try {
-    $size2 = $host.UI.RawUI.WindowSize
-    $size2.Width = 90
-    $size2.Height = 42
-    $host.UI.RawUI.WindowSize = $size2
-} catch {}
 
 $null = $host.UI.ReadLine()
