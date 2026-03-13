@@ -1,7 +1,7 @@
 @echo off
 :: ==========================================
 :: Creado por: Eichhh
-:: Versión: 10.0 nueva pantalla de carga y compactacion
+:: Versión: 10.1 menu y speedtest
 :: ==========================================
 
 :: Deja de ver mi codigo, inche chismoso
@@ -36,7 +36,7 @@ set "GITHUB_USER=azarel22"
 set "GITHUB_REPO=FCA"
 set "GITHUB_BRANCH=main"
 set "SCRIPT_NAME=RTIC_Hub_FCA.bat"
-set "VERSION_ACTUAL=10.0"
+set "VERSION_ACTUAL=10.1"
 :: ==========================================
 
 :: --- DEFINICIÓN DE COLORES ---
@@ -55,6 +55,12 @@ set "YELL=%ESC%[38;2;255;223;80m"
 set "ON=%ESC%[48;2;255;150;0m%ESC%[38;2;0;0;0m"
 set "OFF=%ESC%[48;2;0;0;0m%ESC%[38;2;18;18;18m"
 set "ERR_COL=%ESC%[48;2;160;0;0m%ESC%[38;2;255;255;255m"
+set "MINT=%ESC%[38;2;80;255;180m"
+set "LBLUE=%ESC%[38;2;100;200;255m"
+set "DGRAY=%ESC%[38;2;110;110;110m"
+set "MGRAY=%ESC%[38;2;160;160;160m"
+set "BOLD=%ESC%[1m"
+set "RED=%ESC%[38;2;220;70;70m"
 :: -----------------------------------------------
 
 title RTIC_HUB_FCA
@@ -63,7 +69,7 @@ title RTIC_HUB_FCA
 :: PANTALLA DE CARGA + VERIFICACIONES
 :: ==========================================
 
-mode con: cols=90 lines=32
+mode con: cols=90 lines=42
 echo %ESC%[?25l
 
 set "L0=                                 "
@@ -267,42 +273,48 @@ echo %ESC%[?25h
 goto :MENU_PRINCIPAL
 
 :: ==========================================
-:: 3. MENU PRINCIPAL (JERARQUICO)
+:: 3. MENU PRINCIPAL
 :: ==========================================
 :MENU_PRINCIPAL
-color 0B
+color 00
 cls
-echo ════════════════════════════════════════════════════════
-echo             SISTEMA DE GESTION FCA - UAEMEX
-echo ════════════════════════════════════════════════════════
+
+for /f "tokens=2 delims==" %%a in ('wmic bios get serialnumber /value 2^>nul') do set "SERIAL_NUM=%%a"
+set "SERIAL_NUM=%SERIAL_NUM: =%"
+if "%SERIAL_NUM%"=="" set "SERIAL_NUM=No disponible"
+
 echo.
-echo    Selecciona una categoria:
+echo  %ORANGE%═══════════════════════════════════════════════════════════%RST%
+echo  %BOLD%%CW%  RTIC HUB FCA%RST%  %LBLUE%Sistema de Gestion UAEMEX%RST%  %MGRAY%v%VERSION_ACTUAL%%RST%
+echo  %MGRAY%  Numero de serie del equipo: %MINT%%BOLD%%SERIAL_NUM%%RST%
+echo  %ORANGE%═══════════════════════════════════════════════════════════%RST%
 echo.
-echo    [1] INSTALACION INICIAL (EN DESARROLLO)
-echo        - Drivers, paqueteria basica, etc.
+echo  %YELL%  [1]  %BOLD%%CW%Instalacion Inicial%RST%               %DGRAY%[ En desarrollo ]%RST%
+echo  %DGRAY%       Drivers, paqueteria basica, configuracion inicial.%RST%
 echo.
-echo    [2] CONFIGURACION DE PANTALLA Y FONDO
-echo        - Modo institucional, bloquear fondos, restaurar.
+echo  %YELL%  [2]  %BOLD%%CW%Configuracion de Pantalla%RST%
+echo  %DGRAY%       Fondo institucional, bloqueo, descarga de recursos.%RST%
 echo.
-echo    [3] OPTIMIZADOR DEL SISTEMA
-echo        - Limpieza, rendimiento, temporales.
+echo  %YELL%  [3]  %BOLD%%CW%Optimizador del Sistema%RST%
+echo  %DGRAY%       Rendimiento, nucleos al maximo, efectos visuales.%RST%
 echo.
-echo    [4] GESTION DE REDES, CONECTIVIDAD Y CONFIGURACION
-echo        - Bloquear compartir internet (Hotspot), WiFi.
+echo  %YELL%  [4]  %BOLD%%CW%Redes y Conectividad%RST%
+echo  %DGRAY%       Hotspot, bloqueo de zona de cobertura, IP estatica.%RST%
 echo.
-echo    [5] ACTIVACION DE LICENCIAS
-echo        - Windows y Office.
+echo  %YELL%  [5]  %BOLD%%CW%Activacion de Licencias%RST%
+echo  %DGRAY%       Windows ^(HWID/KMS^), Office LTSC 2021.%RST%
 echo.
-echo    [6] BUSCAR ACTUALIZACIONES
-echo        - Verificar si hay nueva version disponible.
+echo  %YELL%  [6]  %BOLD%%CW%Buscar Actualizaciones%RST%
+echo  %DGRAY%       Conecta con GitHub y verifica si hay nueva version.%RST%
 echo.
-echo    [7] Para aplicar cambios
-echo        - Reiniciar/cerrar sesion 
+echo  %YELL%  [7]  %BOLD%%CW%Opciones del Sistema%RST%
+echo  %DGRAY%       Reiniciar equipo o cerrar sesion.%RST%
 echo.
-echo    [8] SALIR
+echo  %ORANGE%═══════════════════════════════════════════════════════════%RST%
+echo  %RED%  [8]  %BOLD%Salir%RST%
+echo  %ORANGE%═══════════════════════════════════════════════════════════%RST%
 echo.
-echo ════════════════════════════════════════════════════════
-set /p opcion="Escribe el numero y presiona Enter: "
+set /p opcion="%ORANGE%  >> %RST%"
 
 if "%opcion%"=="1" goto :EN_DESARROLLO
 if "%opcion%"=="2" goto :SUBMENU_PANTALLA
@@ -584,15 +596,19 @@ echo.
 echo    [3] CONFIGURACION IP (MANUAL)
 echo        - Asignar IP Estatica, Mascara, Gateway y DNS.
 echo.
-echo    [4] Volver al Menu Principal
+echo    [4] TEST DE VELOCIDAD
+echo        - Mide bajada, subida y latencia en tiempo real.
+echo.
+echo    [5] Volver al Menu Principal
 echo.
 echo ════════════════════════════════════════════════════════
 set /p subop="Selecciona opcion: "
-
+ 
 if "%subop%"=="1" goto :RED_BLOQUEAR_HOTSPOT
 if "%subop%"=="2" goto :RED_DESBLOQUEAR_HOTSPOT
 if "%subop%"=="3" goto :RED_CONFIG_IP
-if "%subop%"=="4" (
+if "%subop%"=="4" goto :SPEED_TEST
+if "%subop%"=="5" (
     echo %RST%
     goto :MENU_PRINCIPAL
 )
@@ -637,6 +653,27 @@ echo [INFO] Bloqueo eliminado. Reinicia si no aparece la opcion.
 echo.
 pause
 goto :EXITO_RETORNO
+
+::==========================================
+:: SPEED TEST
+::==========================================
+:SPEED_TEST
+if exist "%TEMP%\speedtest_tmp.ps1" del "%TEMP%\speedtest_tmp.ps1" >nul 2>&1
+curl -L -s -f "https://raw.githubusercontent.com/azarel22/FCA/refs/heads/main/speedtest.ps1" -o "%TEMP%\speedtest_tmp.ps1" 2>nul
+if not exist "%TEMP%\speedtest_tmp.ps1" (
+    echo.
+    echo [ERROR] No se pudo descargar el modulo de Speed Test.
+    echo         Verifica tu conexion a internet.
+    echo.
+    pause
+    goto :SUBMENU_REDES
+)
+for /f "tokens=2 delims==" %%a in ('reg query "HKCU\Console" /v FontSize 2^>nul ^| findstr FontSize') do set "FONT_BAK=%%a"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "& { $host.UI.RawUI.WindowSize = New-Object System.Management.Automation.Host.Size(90,42); $host.UI.RawUI.BufferSize = New-Object System.Management.Automation.Host.Size(90,42) } 2>$null; & '%TEMP%\speedtest_tmp.ps1'"
+if defined FONT_BAK reg add "HKCU\Console" /v FontSize /t REG_DWORD /d "%FONT_BAK%" /f >nul 2>&1
+mode con: cols=90 lines=42
+if exist "%TEMP%\speedtest_tmp.ps1" del "%TEMP%\speedtest_tmp.ps1" >nul 2>&1
+goto :SUBMENU_REDES
 
 :RED_CONFIG_IP
 cls
