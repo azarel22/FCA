@@ -128,8 +128,6 @@ Write-Host ""
 # [2/3] BAJADA
 # ─────────────────────────
 Draw-Section "[2/3]  BAJADA  (Download)" $GREEN
-Write-Host "  $GRAY  Descargando 50 MB desde Cloudflare...$RST"
-Write-Host ""
 
 $DL = 0
 try {
@@ -151,8 +149,6 @@ Write-Host ""
 # [3/3] SUBIDA
 # ─────────────────────────
 Draw-Section "[3/3]  SUBIDA  (Upload)" $YELLOW
-Write-Host "  $GRAY  Enviando 10 MB a Cloudflare...$RST"
-Write-Host ""
 
 $UL = 0
 try {
