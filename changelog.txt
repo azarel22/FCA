@@ -1,4 +1,4 @@
-10.0
-- Nueva pantalla de carga
-- Ligeramente mas compacto
-- Mas bonito
+10.1
+- Nueva estetica del menu
+- Nueva seccion de testo de red
+- preparacion para mas mejoras esteticas
