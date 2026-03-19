@@ -1,7 +1,7 @@
 @echo off
 :: ==========================================
 :: Creado por: Eichhh
-:: Versión: 10.1 menu y speedtest
+:: Versión: 10.2 correccion de actualizador
 :: ==========================================
 
 :: Deja de ver mi codigo, inche chismoso
@@ -36,7 +36,7 @@ set "GITHUB_USER=azarel22"
 set "GITHUB_REPO=FCA"
 set "GITHUB_BRANCH=main"
 set "SCRIPT_NAME=RTIC_Hub_FCA.bat"
-set "VERSION_ACTUAL=10.1"
+set "VERSION_ACTUAL=10.2"
 :: ==========================================
 
 :: --- DEFINICIÓN DE COLORES ---
@@ -886,6 +886,86 @@ echo.
 set /p update_choice_manual="%CYAN%Selecciona una opcion: %RST%"
 
 if "%update_choice_manual%"=="1" goto :PROCESAR_ACTUALIZACION
+goto :MENU_PRINCIPAL
+
+:: ==========================================
+:: PROCESAR ACTUALIZACION
+:: ==========================================
+:PROCESAR_ACTUALIZACION
+cls
+echo.
+echo %YELL%════════════════════════════════════════════════════════════%RST%
+echo %YELL%                  ACTUALIZANDO RTIC HUB FCA%RST%
+echo %YELL%════════════════════════════════════════════════════════════%RST%
+echo.
+echo %CG%   Preparando entorno de actualizacion...%RST%
+echo.
+
+set "SCRIPT_PATH=%~f0"
+set "SCRIPT_DIR=%~dp0"
+
+echo %YELL%════════════════════════════════════════════════════════════%RST%
+echo %CW%   1 / 4   %CG%Descargando nueva version desde GitHub...%RST%
+echo %YELL%════════════════════════════════════════════════════════════%RST%
+echo.
+curl -L -s -f "https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/refs/heads/main/%SCRIPT_NAME%" -o "%TEMP%\RTIC_Updates\nueva_version.bat"
+
+if errorlevel 1 (
+    echo.
+    echo %R_ERR%════════════════════════════════════════════════════════════%RST%
+    echo %R_ERR%   ERROR   No se pudo descargar la actualizacion.%RST%
+    echo %R_ERR%           Verifica tu conexion a internet e intentalo%RST%
+    echo %R_ERR%           de nuevo desde el menu principal.%RST%
+    echo %R_ERR%════════════════════════════════════════════════════════════%RST%
+    echo.
+    pause
+    goto :MENU_PRINCIPAL
+)
+
+echo %MINT%   Descarga completada correctamente.%RST%
+echo.
+echo %YELL%════════════════════════════════════════════════════════════%RST%
+echo %CW%   2 / 4   %CG%Creando respaldo de la version actual...%RST%
+echo %YELL%════════════════════════════════════════════════════════════%RST%
+echo.
+copy "%SCRIPT_PATH%" "%SCRIPT_DIR%RTIC_Hub_FCA_backup_%VERSION_ACTUAL%.bat" >nul 2>&1
+echo %MINT%   Respaldo guardado como:%RST%
+echo %CW%   RTIC_Hub_FCA_backup_%VERSION_ACTUAL%.bat%RST%
+echo.
+echo %YELL%════════════════════════════════════════════════════════════%RST%
+echo %CW%   3 / 4   %CG%Preparando instalador temporal...%RST%
+echo %YELL%════════════════════════════════════════════════════════════%RST%
+echo.
+
+(
+    echo @echo off
+    echo timeout /t 2 /nobreak ^>nul
+    echo copy /y "%TEMP%\RTIC_Updates\nueva_version.bat" "%SCRIPT_PATH%" ^>nul 2^>^&1
+    echo if errorlevel 1 ^(
+    echo     echo ERROR: No se pudo reemplazar el archivo.
+    echo     pause
+    echo     exit
+    echo ^)
+    echo del "%TEMP%\RTIC_Updates\nueva_version.bat" ^>nul 2^>^&1
+    echo start "" "%SCRIPT_PATH%" skipupdate
+    echo exit
+) > "%TEMP%\RTIC_Updates\update_script.bat"
+
+echo %MINT%   Instalador listo.%RST%
+echo.
+echo %YELL%════════════════════════════════════════════════════════════%RST%
+echo %CW%   4 / 4   %CG%Aplicando actualizacion...%RST%
+echo %YELL%════════════════════════════════════════════════════════════%RST%
+echo.
+echo %CW%   La aplicacion se cerrara y se reiniciara%RST%
+echo %CW%   automaticamente con la nueva version.%RST%
+echo.
+echo %CG%   Espera un momento...%RST%
+echo.
+timeout /t 3 /nobreak >nul
+
+start /min "" "%TEMP%\RTIC_Updates\update_script.bat"
+exit
 goto :MENU_PRINCIPAL
 
 :OPCIONES_SISTEMA
