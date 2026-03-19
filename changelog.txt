@@ -1,4 +1,5 @@
-10.1
-- Nueva estetica del menu
-- Nueva seccion de testo de red
-- preparacion para mas mejoras esteticas
+10.2
+- Se arreglo la actualizacion
+   (en teoria)
+- Actualicen desde una version anterior a la 10.0
+- Cambien el nombre a RTIC_Hub_FCA para que funcione
