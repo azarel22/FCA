@@ -1,5 +1,5 @@
-10.2
+10.3
 - Se arreglo la actualizacion
-   (en teoria)
 - Actualicen desde una version anterior a la 10.0
 - Cambien el nombre a RTIC_Hub_FCA para que funcione
+- Integracion de logs en formato CVS
