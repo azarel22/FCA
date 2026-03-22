@@ -1,7 +1,7 @@
 @echo off
 :: ==========================================
 :: Creado por: Eichhh
-:: Versión: 10.2 correccion de actualizador
+:: Versión: 10.3 Sistema de CVS
 :: ==========================================
 
 :: Deja de ver mi codigo, inche chismoso
@@ -36,8 +36,26 @@ set "GITHUB_USER=azarel22"
 set "GITHUB_REPO=FCA"
 set "GITHUB_BRANCH=main"
 set "SCRIPT_NAME=RTIC_Hub_FCA.bat"
-set "VERSION_ACTUAL=10.2"
+set "VERSION_ACTUAL=10.3"
 :: ==========================================
+
+:: ==========================================
+:: CONFIGURACIÓN DE LOGS
+:: ==========================================
+set "LOG_DIR=C:\Archivos_FCA_UAEMEX\Logs\RTIC_Log.csv"
+set "LOG_FILE=%LOG_DIR%\RTIC_Log.csv"
+:: ==========================================
+
+:: ==========================================
+:: INICIALIZAR SISTEMA DE LOGS
+:: ==========================================
+if not exist "%LOG_DIR%" mkdir "%LOG_DIR%" >nul 2>&1
+if not exist "%LOG_FILE%" (
+  echo FECHA,HORA,NUMERO_SERIE,ACCION,MODULO,RESULTADO,VERSION_SCRIPT >> "%LOG_FILE%"
+)
+for /f "tokens=2 delims==." %%a in ('wmic os get LocalDateTime /value 2^>nul') do set "DT=%%a"
+set "LOG_FECHA=%DT:~0,4%-%DT:~4,2%-%DT:~6,2%"
+set "LOG_HORA=%DT:~8,2%:%DT:~10,2%:%DT:~12,2%"
 
 :: --- DEFINICIÓN DE COLORES ---
 :: Definimos el caracter ESC
@@ -116,72 +134,83 @@ if %errorlevel% NEQ 0 set "FLAG_ADMIN=FAIL"
 set "FLAG_UPDATE=OK"
 set "VERSION_REMOTA="
 if "%FLAG_INTERNET%"=="OK" (
-    if not "%1"=="skipupdate" (
-        if not exist "%TEMP%\RTIC_Updates" mkdir "%TEMP%\RTIC_Updates" >nul 2>&1
-        curl -L -s -f "https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/refs/heads/main/version.txt" -o "%TEMP%\RTIC_Updates\version.txt" 2>nul
-        curl -L -s -f "https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/refs/heads/main/changelog.txt" -o "%TEMP%\RTIC_Updates\changelog.txt" 2>nul
-        for /f "usebackq tokens=*" %%a in ("%TEMP%\RTIC_Updates\version.txt") do (
-            if "!VERSION_REMOTA!"=="" set "VERSION_REMOTA=%%a"
-        )
-        if not "!VERSION_REMOTA!"=="" (
-            if not "%VERSION_ACTUAL%"=="!VERSION_REMOTA!" set "FLAG_UPDATE=NEW"
-        )
+  if not "%1"=="skipupdate" (
+    if not exist "%TEMP%\RTIC_Updates" mkdir "%TEMP%\RTIC_Updates" >nul 2>&1
+    curl -L -s -f "https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/refs/heads/main/version.txt" -o "%TEMP%\RTIC_Updates\version.txt" 2>nul
+    curl -L -s -f "https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/refs/heads/main/changelog.txt" -o "%TEMP%\RTIC_Updates\changelog.txt" 2>nul
+    for /f "usebackq tokens=*" %%a in ("%TEMP%\RTIC_Updates\version.txt") do (
+      if "!VERSION_REMOTA!"=="" set "VERSION_REMOTA=%%a"
     )
+    if not "!VERSION_REMOTA!"=="" (
+      if not "%VERSION_ACTUAL%"=="!VERSION_REMOTA!" set "FLAG_UPDATE=NEW"
+    )
+  )
 )
 
 :: LOOP DE ANIMACION
 for /L %%S in (1,1,13) do (
-
-    set /a "COLS_ON=%%S * 2"
-    set "BLOQUE=!ON!"
-
-    if "!FLAG_INTERNET!"=="FAIL" if %%S GEQ 2 set "BLOQUE=!ERR_COL!"
-    if "!FLAG_ADMIN!"=="FAIL"    if %%S GEQ 3 set "BLOQUE=!ERR_COL!"
-    if "!FLAG_UPDATE!"=="NEW"    if %%S GEQ 4 set "BLOQUE=%ESC%[48;2;255;223;80m%ESC%[38;2;0;0;0m"
-
-    for /L %%R in (1,1,8) do (
-        set "HROW=!H%%R!"
-        call set "LEFT=%%HROW:~0,!COLS_ON!%%"
-        call set "RIGHT=%%HROW:~!COLS_ON!%%"
-        set "ROW%%R=!BLOQUE!!LEFT!!RST!!OFF!!RIGHT!!RST!"
-    )
-
-    cls
-    echo.
-    echo.
-    echo !CW!!L0!  !ROW1! !CW!fca!RST!
-    echo !CW!!L1!  !ROW2!!RST!
-    echo !CW!!L2!  !ROW3!!RST!
-    echo !CW!!L3!  !ROW4!!RST!
-    echo !CW!!L4!  !ROW5!!RST!
-    echo !CW!!L5!  !ROW6!!RST!
-    echo !CW!!L6!  !ROW7!!RST!
-    echo !CW!!L7!  !ROW8!!RST!
-    echo.
-    echo                       !CG!Creado por: Eichhh!RST!
-    echo                         !CG!Version: %VERSION_ACTUAL%!RST!
-    echo.
-    echo !CG!!MOD[%%S]!!RST!
-
-    set "DELAY=250"
-    if %%S EQU 2 if "!FLAG_INTERNET!"=="FAIL" set "DELAY=1500"
-    if %%S EQU 3 if "!FLAG_ADMIN!"=="FAIL"    set "DELAY=1500"
-    if %%S EQU 4 if "!FLAG_UPDATE!"=="NEW"    set "DELAY=1500"
-    ping -n 1 -w !DELAY! 127.255.255.255 >nul
-
-    if %%S EQU 2 if "!FLAG_INTERNET!"=="FAIL" goto :ERROR_INTERNET
-    if %%S EQU 3 if "!FLAG_ADMIN!"=="FAIL"    goto :ERROR_ADMIN
-    if %%S EQU 4 if "!FLAG_UPDATE!"=="NEW"    goto :AVISO_UPDATE
+  
+  set /a "COLS_ON=%%S * 2"
+  set "BLOQUE=!ON!"
+  
+  if "!FLAG_INTERNET!"=="FAIL" if %%S GEQ 2 set "BLOQUE=!ERR_COL!"
+  if "!FLAG_ADMIN!"=="FAIL"    if %%S GEQ 3 set "BLOQUE=!ERR_COL!"
+  if "!FLAG_UPDATE!"=="NEW"    if %%S GEQ 4 set "BLOQUE=%ESC%[48;2;255;223;80m%ESC%[38;2;0;0;0m"
+  
+  for /L %%R in (1,1,8) do (
+    set "HROW=!H%%R!"
+    call set "LEFT=%%HROW:~0,!COLS_ON!%%"
+    call set "RIGHT=%%HROW:~!COLS_ON!%%"
+    set "ROW%%R=!BLOQUE!!LEFT!!RST!!OFF!!RIGHT!!RST!"
+  )
+  
+  cls
+  echo.
+  echo.
+  echo !CW!!L0!  !ROW1! !CW!fca!RST!
+  echo !CW!!L1!  !ROW2!!RST!
+  echo !CW!!L2!  !ROW3!!RST!
+  echo !CW!!L3!  !ROW4!!RST!
+  echo !CW!!L4!  !ROW5!!RST!
+  echo !CW!!L5!  !ROW6!!RST!
+  echo !CW!!L6!  !ROW7!!RST!
+  echo !CW!!L7!  !ROW8!!RST!
+  echo.
+  echo                       !CG!Creado por: Eichhh!RST!
+  echo                         !CG!Version: %VERSION_ACTUAL%!RST!
+  echo.
+  echo !CG!!MOD[%%S]!!RST!
+  
+  set "DELAY=250"
+  if %%S EQU 2 if "!FLAG_INTERNET!"=="FAIL" set "DELAY=1500"
+  if %%S EQU 3 if "!FLAG_ADMIN!"=="FAIL"    set "DELAY=1500"
+  if %%S EQU 4 if "!FLAG_UPDATE!"=="NEW"    set "DELAY=1500"
+  ping -n 1 -w !DELAY! 127.255.255.255 >nul
+  
+  if %%S EQU 2 if "!FLAG_INTERNET!"=="FAIL" goto :ERROR_INTERNET
+  if %%S EQU 3 if "!FLAG_ADMIN!"=="FAIL"  goto :ERROR_ADMIN
+  if %%S EQU 4 if "!FLAG_UPDATE!"=="NEW"  goto :AVISO_UPDATE
 )
 
 echo %ESC%[?25h
+call :REGISTRAR_LOG "INICIO_SESION" "Sistema" "OK"
 goto :MENU_PRINCIPAL
+
+:REGISTRAR_LOG
+for /f "tokens=2 delims==." %%a in ('wmic os get LocalDateTime /value 2^>nul') do set "DT_NOW=%%a"
+set "L_FECHA=%DT_NOW:~0,4%-%DT_NOW:~4,2%-%DT_NOW:~6,2%"
+set "L_HORA=%DT_NOW:~8,2%:%DT_NOW:~10,2%:%DT_NOW:~12,2%"
+echo %L_FECHA%,%L_HORA%,%SERIAL_NUM%,%~1,%~2,%~3,%VERSION_ACTUAL% >> "%LOG_FILE%"
+goto :eof
+
+:SKIP_LOG_FUNCTION
 
 :: -------------------------------------------------------
 :: HANDLER: SIN INTERNET
 :: -------------------------------------------------------
 :ERROR_INTERNET
 echo %ESC%[?25h
+call :REGISTRAR_LOG "INICIO_SESION" "Verificacion" "ERROR_SIN_INTERNET"
 echo.
 echo %R_ERR%════════════════════════════════════════════════════════════%RST%
 echo %R_ERR%       ERROR: NO SE DETECTA CONEXION A INTERNET%RST%
@@ -205,6 +234,7 @@ exit
 :: -------------------------------------------------------
 :ERROR_ADMIN
 echo %ESC%[?25h
+call :REGISTRAR_LOG "INICIO_SESION" "Verificacion" "ERROR_SIN_PERMISOS_ADMIN"
 echo.
 echo %R_ERR%════════════════════════════════════════════════════════════%RST%
 echo %R_ERR%       ERROR: SE REQUIEREN PERMISOS DE ADMINISTRADOR%RST%
@@ -449,6 +479,7 @@ echo.
 echo Actualizando politicas...
 gpupdate /force >nul 2>&1
 start explorer.exe
+call :REGISTRAR_LOG "BLOQUEAR_FONDO" "Pantalla" "OK"
 goto :EXITO_RETORNO
 
 :PANTALLA_RESTAURAR
@@ -473,6 +504,7 @@ reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ThemeManager" /v "ThemeR
 RUNDLL32.EXE user32.dll,UpdatePerUserSystemParameters
 gpupdate /force >nul 2>&1
 start explorer.exe
+call :REGISTRAR_LOG "RESTAURAR_PERMISOS_FONDO" "Pantalla" "OK"
 goto :EXITO_RETORNO
 
 :Fondos
@@ -488,7 +520,7 @@ curl -L -s -o "C:\Archivos_FCA_UAEMEX\lock_screen_wallpaper_fca.png" "https://ra
 
 echo [3/3] Abriendo carpeta...
 start "" "C:\Archivos_FCA_UAEMEX"
-
+call :REGISTRAR_LOG "DESCARGAR_FONDOS" "Pantalla" "OK"
 goto :EXITO_RETORNO
 
 :: ==========================================
@@ -525,7 +557,7 @@ echo.
 echo [1/3] Configurando ARRANQUE (Procesadores)...
 :: Esto equivale a ir a msconfig y marcar el maximo de nucleos manualmente
 bcdedit /set {current} numproc %NUMBER_OF_PROCESSORS% >nul 2>&1
-echo      - Nucleos configurados al maximo: %NUMBER_OF_PROCESSORS%
+echo  - Nucleos configurados al maximo: %NUMBER_OF_PROCESSORS%
 
 echo [2/3] Configurando EFECTOS VISUALES (Rendimiento)...
 :: Establece "Ajustar para obtener el mejor rendimiento" como base
@@ -546,9 +578,10 @@ taskkill /f /im explorer.exe >nul 2>&1
 start explorer.exe
 echo.
 echo [EXITO] Optimizacion aplicada.
-echo         Las fuentes se veran bien, pero el resto estara optimizado.
-echo         NOTA: Reinicia el equipo para aplicar los nucleos del CPU.
+echo  Las fuentes se veran bien, pero el resto estara optimizado.
+echo  NOTA: Reinicia el equipo para aplicar los nucleos del CPU.
 echo.
+call :REGISTRAR_LOG "OPTIMIZACION_APLICADA" "Optimizador" "OK"
 pause
 goto :MENU_PRINCIPAL
 
@@ -572,6 +605,7 @@ start explorer.exe
 echo.
 echo [EXITO] Configuracion restaurada a valores de fabrica.
 echo.
+call :REGISTRAR_LOG "OPTIMIZACION_RESTAURADA" "Optimizador" "OK"
 pause
 goto :MENU_PRINCIPAL
 
@@ -603,14 +637,14 @@ echo    [5] Volver al Menu Principal
 echo.
 echo ════════════════════════════════════════════════════════
 set /p subop="Selecciona opcion: "
- 
+
 if "%subop%"=="1" goto :RED_BLOQUEAR_HOTSPOT
 if "%subop%"=="2" goto :RED_DESBLOQUEAR_HOTSPOT
 if "%subop%"=="3" goto :RED_CONFIG_IP
 if "%subop%"=="4" goto :SPEED_TEST
 if "%subop%"=="5" (
-    echo %RST%
-    goto :MENU_PRINCIPAL
+  echo %RST%
+  goto :MENU_PRINCIPAL
 )
 goto :SUBMENU_REDES
 
@@ -631,6 +665,7 @@ gpupdate /force >nul 2>&1
 echo.
 echo [INFO] Bloqueo aplicado. REINICIA para ver todos los cambios.
 echo.
+call :REGISTRAR_LOG "BLOQUEAR_HOTSPOT" "Redes" "OK"
 pause
 goto :EXITO_RETORNO
 
@@ -651,6 +686,7 @@ gpupdate /force >nul 2>&1
 echo.
 echo [INFO] Bloqueo eliminado. Reinicia si no aparece la opcion.
 echo.
+call :REGISTRAR_LOG "DESBLOQUEAR_HOTSPOT" "Redes" "OK"
 pause
 goto :EXITO_RETORNO
 
@@ -658,21 +694,24 @@ goto :EXITO_RETORNO
 :: SPEED TEST
 ::==========================================
 :SPEED_TEST
+call :REGISTRAR_LOG "SPEED_TEST" "Redes" "INICIANDO"
 if exist "%TEMP%\speedtest_tmp.ps1" del "%TEMP%\speedtest_tmp.ps1" >nul 2>&1
 curl -L -s -f "https://raw.githubusercontent.com/azarel22/FCA/refs/heads/main/speedtest.ps1" -o "%TEMP%\speedtest_tmp.ps1" 2>nul
 if not exist "%TEMP%\speedtest_tmp.ps1" (
-    echo.
-    echo [ERROR] No se pudo descargar el modulo de Speed Test.
-    echo         Verifica tu conexion a internet.
-    echo.
-    pause
-    goto :SUBMENU_REDES
+  echo.
+  echo [ERROR] No se pudo descargar el modulo de Speed Test.
+  echo  Verifica tu conexion a internet.
+  echo.
+  pause
+  call :REGISTRAR_LOG "SPEED_TEST" "Redes" "Error"
+  goto :SUBMENU_REDES
 )
 for /f "tokens=2 delims==" %%a in ('reg query "HKCU\Console" /v FontSize 2^>nul ^| findstr FontSize') do set "FONT_BAK=%%a"
 powershell -NoProfile -ExecutionPolicy Bypass -Command "& { $host.UI.RawUI.WindowSize = New-Object System.Management.Automation.Host.Size(90,42); $host.UI.RawUI.BufferSize = New-Object System.Management.Automation.Host.Size(90,42) } 2>$null; & '%TEMP%\speedtest_tmp.ps1'"
 if defined FONT_BAK reg add "HKCU\Console" /v FontSize /t REG_DWORD /d "%FONT_BAK%" /f >nul 2>&1
 mode con: cols=90 lines=42
 if exist "%TEMP%\speedtest_tmp.ps1" del "%TEMP%\speedtest_tmp.ps1" >nul 2>&1
+call :REGISTRAR_LOG "SPEED_TEST" "Redes" "Completado"
 goto :SUBMENU_REDES
 
 :RED_CONFIG_IP
@@ -731,6 +770,7 @@ echo ═════════════════════════
 echo %CW%PROCESO FINALIZADO. Probando conexion...%P141%
 ping 8.8.8.8 -n 2
 echo.
+call :REGISTRAR_LOG "CONFIG_IP_ESTATICA" "Redes" "OK"
 pause
 :: LIMPIEZA TOTAL ANTES DE SALIR
 echo %RST%
@@ -776,17 +816,17 @@ if exist "%ProgramFiles%\Microsoft Office\Office16\ospp.vbs" set "OFFICE_DIR=%Pr
 if exist "%ProgramFiles(x86)%\Microsoft Office\Office16\ospp.vbs" set "OFFICE_DIR=%ProgramFiles(x86)%\Microsoft Office\Office16"
 
 if not defined OFFICE_DIR (
-    color 0C
-    echo.
-    echo [ERROR] No se encontro Office 2016/2019/2021 instalado.
-    echo         Verifica que este instalado en la ruta por defecto.
-    echo.
-    pause
-    goto :ACTIVACION
+  color 0C
+  echo.
+  echo [ERROR] No se encontro Office 2016/2019/2021 instalado.
+  echo  Verifica que este instalado en la ruta por defecto.
+  echo.
+  pause
+  goto :ACTIVACION
 )
 
 echo [2/3] Instalando Clave LTSC 2021 Pro Plus...
-echo        Clave: D67NW-YV8J3-CCXTQ-V3B83-M7YGK
+echo  Clave: D67NW-YV8J3-CCXTQ-V3B83-M7YGK
 cd /d "%OFFICE_DIR%"
 cscript //nologo ospp.vbs /inpkey:D67NW-YV8J3-CCXTQ-V3B83-M7YGK
 
@@ -797,6 +837,7 @@ cscript //nologo ospp.vbs /act
 echo.
 echo [RESULTADO] Proceso finalizado. Verifica los mensajes anteriores.
 echo.
+call :REGISTRAR_LOG "ACTIVAR_OFFICE_LTSC" "Licencias" "OK"
 pause
 goto :ACTIVACION
 
@@ -805,10 +846,11 @@ goto :ACTIVACION
 cls
 echo.
 echo [INFO] Lanzando PowerShell como Administrador...
-echo        Espera a que cargue la ventana azul.
+echo  Espera a que cargue la ventana azul.
 start powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://get.activated.win | iex"
 echo.
 echo [PROCESO] Script ejecutado en segunda ventana.
+call :REGISTRAR_LOG "ACTIVAR_MAS_WINDOWS" "Licencias" "LANZADO"
 pause
 goto :ACTIVACION
 
@@ -830,43 +872,43 @@ if not exist "%TEMP%\RTIC_Updates" mkdir "%TEMP%\RTIC_Updates" >nul 2>&1
 curl -L -s -f "https://raw.githubusercontent.com/azarel22/FCA/refs/heads/main/version.txt" -o "%TEMP%\RTIC_Updates\version.txt" 2>nul
 
 if errorlevel 1 (
-    echo %R_ERR%════════════════════════════════════════════════════════════%RST%
-    echo %R_ERR%   ERROR: NO SE PUDO CONECTAR AL REPOSITORIO%RST%
-    echo %R_ERR%════════════════════════════════════════════════════════════%RST%
-    echo.
-    echo    Verifica tu conexion a internet e intentalo de nuevo.
-    echo.
-    pause
-    goto :MENU_PRINCIPAL
+  echo %R_ERR%════════════════════════════════════════════════════════════%RST%
+  echo %R_ERR%  ERROR: NO SE PUDO CONECTAR AL REPOSITORIO%RST%
+  echo %R_ERR%════════════════════════════════════════════════════════════%RST%
+  echo.
+  echo  Verifica tu conexion a internet e intentalo de nuevo.
+  echo.
+  pause
+  goto :MENU_PRINCIPAL
 )
 
 set "VERSION_REMOTA="
 for /f "usebackq tokens=*" %%a in ("%TEMP%\RTIC_Updates\version.txt") do (
-    set "VERSION_REMOTA=%%a"
-    goto :version_leida_manual
+  set "VERSION_REMOTA=%%a"
+  goto :version_leida_manual
 )
 :version_leida_manual
 
 if "%VERSION_REMOTA%"=="" (
-    echo %R_ERR%════════════════════════════════════════════════════════════%RST%
-    echo %R_ERR%   ERROR: NO SE PUDO LEER LA INFORMACION DE VERSION%RST%
-    echo %R_ERR%════════════════════════════════════════════════════════════%RST%
-    echo.
-    pause
-    goto :MENU_PRINCIPAL
+  echo %R_ERR%════════════════════════════════════════════════════════════%RST%
+  echo %R_ERR%  ERROR: NO SE PUDO LEER LA INFORMACION DE VERSION%RST%
+  echo %R_ERR%════════════════════════════════════════════════════════════%RST%
+  echo.
+  pause
+  goto :MENU_PRINCIPAL
 )
 
-echo %CG%   Version instalada:   %CW%%VERSION_ACTUAL%%RST%
-echo %CG%   Version en GitHub:   %CW%%VERSION_REMOTA%%RST%
+echo %CG%  Version instalada:  %CW%%VERSION_ACTUAL%%RST%
+echo %CG%  Version en GitHub:  %CW%%VERSION_REMOTA%%RST%
 echo.
 
 if "%VERSION_ACTUAL%"=="%VERSION_REMOTA%" (
-    echo %CW%════════════════════════════════════════════════════════════%RST%
-    echo %YELL%   Tu sistema esta al dia. No hay actualizaciones.%RST%
-    echo %CW%════════════════════════════════════════════════════════════%RST%
-    echo.
-    pause
-    goto :MENU_PRINCIPAL
+  echo %CW%════════════════════════════════════════════════════════════%RST%
+  echo %YELL%  Tu sistema esta al dia. No hay actualizaciones.%RST%
+  echo %CW%════════════════════════════════════════════════════════════%RST%
+  echo.
+  pause
+  goto :MENU_PRINCIPAL
 )
 
 :: Nueva versión disponible
@@ -911,15 +953,15 @@ echo.
 curl -L -s -f "https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/refs/heads/main/%SCRIPT_NAME%" -o "%TEMP%\RTIC_Updates\nueva_version.bat"
 
 if errorlevel 1 (
-    echo.
-    echo %R_ERR%════════════════════════════════════════════════════════════%RST%
-    echo %R_ERR%   ERROR   No se pudo descargar la actualizacion.%RST%
-    echo %R_ERR%           Verifica tu conexion a internet e intentalo%RST%
-    echo %R_ERR%           de nuevo desde el menu principal.%RST%
-    echo %R_ERR%════════════════════════════════════════════════════════════%RST%
-    echo.
-    pause
-    goto :MENU_PRINCIPAL
+  echo.
+  echo %R_ERR%════════════════════════════════════════════════════════════%RST%
+  echo %R_ERR%   ERROR   No se pudo descargar la actualizacion.%RST%
+  echo %R_ERR%           Verifica tu conexion a internet e intentalo%RST%
+  echo %R_ERR%           de nuevo desde el menu principal.%RST%
+  echo %R_ERR%════════════════════════════════════════════════════════════%RST%
+  echo.
+  pause
+  goto :MENU_PRINCIPAL
 )
 
 echo %MINT%   Descarga completada correctamente.%RST%
@@ -938,17 +980,17 @@ echo %YELL%═══════════════════════
 echo.
 
 (
-    echo @echo off
-    echo timeout /t 2 /nobreak ^>nul
-    echo copy /y "%TEMP%\RTIC_Updates\nueva_version.bat" "%SCRIPT_PATH%" ^>nul 2^>^&1
-    echo if errorlevel 1 ^(
-    echo     echo ERROR: No se pudo reemplazar el archivo.
-    echo     pause
-    echo     exit
-    echo ^)
-    echo del "%TEMP%\RTIC_Updates\nueva_version.bat" ^>nul 2^>^&1
-    echo start "" "%SCRIPT_PATH%" skipupdate
-    echo exit
+  echo @echo off
+  echo timeout /t 2 /nobreak ^>nul
+  echo copy /y "%TEMP%\RTIC_Updates\nueva_version.bat" "%SCRIPT_PATH%" ^>nul 2^>^&1
+  echo if errorlevel 1 ^(
+  echo     echo ERROR: No se pudo reemplazar el archivo.
+  echo     pause
+  echo     exit
+  echo ^)
+  echo del "%TEMP%\RTIC_Updates\nueva_version.bat" ^>nul 2^>^&1
+  echo start "" "%SCRIPT_PATH%" skipupdate
+  echo exit
 ) > "%TEMP%\RTIC_Updates\update_script.bat"
 
 echo %MINT%   Instalador listo.%RST%
