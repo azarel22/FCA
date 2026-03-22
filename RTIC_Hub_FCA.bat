@@ -1,7 +1,7 @@
 @echo off
 :: ==========================================
 :: Creado por: Eichhh
-:: Versión: 10.3 Sistema de CVS
+:: Versión: 10.4 Colores nuevos
 :: ==========================================
 
 :: Deja de ver mi codigo, inche chismoso
@@ -36,7 +36,7 @@ set "GITHUB_USER=azarel22"
 set "GITHUB_REPO=FCA"
 set "GITHUB_BRANCH=main"
 set "SCRIPT_NAME=RTIC_Hub_FCA.bat"
-set "VERSION_ACTUAL=10.3"
+set "VERSION_ACTUAL=10.4"
 :: ==========================================
 
 :: ==========================================
@@ -62,15 +62,12 @@ set "LOG_HORA=%DT:~8,2%:%DT:~10,2%:%DT:~12,2%"
 for /F "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1) do rem"') do set "ESC=%%b"
 :: --- PALETA DE COLORES ---
 set "CW=%ESC%[38;2;255;255;255m"
-set "CH=%ESC%[48;2;255;150;0m%ESC%[38;2;0;0;0m"
 set "RST=%ESC%[0m"
 set "CG=%ESC%[90m"
-set "P141=%ESC%[38;5;141m"
 set "R_ERR=%ESC%[91m"
-set "CYAN=%ESC%[96m"
-set "ORANGE=%ESC%[38;5;208m"
+set "ORANGE=%ESC%[38;2;200;150;0m"
 set "YELL=%ESC%[38;2;255;223;80m"
-set "ON=%ESC%[48;2;255;150;0m%ESC%[38;2;0;0;0m"
+set "ON=%ESC%[48;2;200;150;0m%ESC%[38;2;0;0;0m"
 set "OFF=%ESC%[48;2;0;0;0m%ESC%[38;2;18;18;18m"
 set "ERR_COL=%ESC%[48;2;160;0;0m%ESC%[38;2;255;255;255m"
 set "MINT=%ESC%[38;2;80;255;180m"
@@ -79,6 +76,10 @@ set "DGRAY=%ESC%[38;2;110;110;110m"
 set "MGRAY=%ESC%[38;2;160;160;160m"
 set "BOLD=%ESC%[1m"
 set "RED=%ESC%[38;2;220;70;70m"
+set "SCR=%ESC%[38;2;80;210;190m"
+set "OPT=%ESC%[38;2;140;230;100m"
+set "ACT=%ESC%[38;2;255;185;100m"
+set "SYS=%ESC%[38;2;190;175;255m"
 :: -----------------------------------------------
 
 title RTIC_HUB_FCA
@@ -225,7 +226,7 @@ echo.
 echo    [1] SI, Entrar al menu de redes
 echo    [2] NO, Salir del programa
 echo.
-set /p "redfix=%CYAN%Selecciona una opcion: %RST%"
+set /p "redfix=%LBLUE%Selecciona una opcion: %RST%"
 if "%redfix%"=="1" goto :SUBMENU_REDES
 exit
 
@@ -267,7 +268,7 @@ echo.
 echo    [1] SI - Descargar e instalar actualizacion
 echo    [2] NO - Continuar con la version actual
 echo.
-set /p "update_choice=%CYAN%Selecciona una opcion: %RST%"
+set /p "update_choice=%LBLUE%Selecciona una opcion: %RST%"
 if "!update_choice!"=="1" goto :PROCESAR_ACTUALIZACION
 echo.
 echo [INFO] Actualizacion omitida. Continuando...
@@ -362,9 +363,9 @@ goto :MENU_PRINCIPAL
 :EN_DESARROLLO
 cls
 echo.
-echo ════════════════════════════════════════════════════════
-echo             MODULO EN FASE DE DESARROLLO
-echo ════════════════════════════════════════════════════════
+echo %DGRAY%════════════════════════════════════════════════════════%RST%
+echo %DGRAY%             MODULO EN FASE DE DESARROLLO%RST%
+echo %DGRAY%════════════════════════════════════════════════════════%RST%
 echo.
 echo    Esta funcion estara disponible en la proxima
 echo    actualizacion del script.
@@ -377,9 +378,9 @@ goto :MENU_PRINCIPAL
 :: ==========================================
 :SUBMENU_PANTALLA
 cls
-echo ════════════════════════════════════════════════════════
-echo            GESTION DE PANTALLA Y APARIENCIA
-echo ════════════════════════════════════════════════════════
+echo %SCR%════════════════════════════════════════════════════════%RST%
+echo %SCR%           GESTION DE PANTALLA Y APARIENCIA%RST%
+echo %SCR%════════════════════════════════════════════════════════%RST%
 echo.
 echo    [1] MODO INSTITUCIONAL (Recomendado)(EN DESARROLLO)
 echo        - Descarga fondo FCA, lo aplica y bloquea cambios.
@@ -398,7 +399,7 @@ echo.
 echo    [5] Volver al Menu Principal
 echo.
 echo ════════════════════════════════════════════════════════
-set /p subop="Selecciona opcion: "
+set /p subop="%SCR%Selecciona opcion: %RST%"
 
 if "%subop%"=="1" goto :EN_DESARROLLO
 if "%subop%"=="2" goto :PANTALLA_RESTAURAR
@@ -528,9 +529,9 @@ goto :EXITO_RETORNO
 :: ==========================================
 :SUBMENU_OPTIMIZADOR
 cls
-echo ════════════════════════════════════════════════════════
-echo          OPTIMIZADOR DE RENDIMIENTO Y ARRANQUE
-echo ════════════════════════════════════════════════════════
+echo %OPT%════════════════════════════════════════════════════════%RST%
+echo %OPT%         OPTIMIZADOR DE RENDIMIENTO Y ARRANQUE%RST%
+echo %OPT%════════════════════════════════════════════════════════%RST%
 echo.
 echo    [1] APLICAR OPTIMIZACION (MAX RENDIMIENTO + FUENTES)
 echo        - Boot: Activa TODOS los procesadores (%NUMBER_OF_PROCESSORS%).
@@ -544,7 +545,7 @@ echo.
 echo    [3] Volver al Menu Principal
 echo.
 echo ════════════════════════════════════════════════════════
-set /p subop="Selecciona opcion: "
+set /p subop="%OPT%Selecciona opcion: %RST%"
 
 if "%subop%"=="1" goto :APLICAR_OPTIMIZACION
 if "%subop%"=="2" goto :RESTAURAR_OPTIMIZACION
@@ -614,10 +615,9 @@ goto :MENU_PRINCIPAL
 :: ==========================================
 :SUBMENU_REDES
 cls
-echo %P141%
-echo ════════════════════════════════════════════════════════
-echo             GESTION DE REDES Y CONECTIVIDAD
-echo ════════════════════════════════════════════════════════
+echo %LBLUE%════════════════════════════════════════════════════════%RST%
+echo %LBLUE%            GESTION DE REDES Y CONECTIVIDAD%RST%
+echo %LBLUE%════════════════════════════════════════════════════════%RST%
 echo.
 echo    [1] BLOQUEAR ZONA DE COBERTURA (Mobile Hotspot)
 echo        - Evita que el usuario comparta internet por WiFi.
@@ -635,8 +635,8 @@ echo        - Mide bajada, subida y latencia en tiempo real.
 echo.
 echo    [5] Volver al Menu Principal
 echo.
-echo ════════════════════════════════════════════════════════
-set /p subop="Selecciona opcion: "
+echo %LBLUE%════════════════════════════════════════════════════════%RST%
+set /p subop="%LBLUE%Selecciona opcion: %RST%"
 
 if "%subop%"=="1" goto :RED_BLOQUEAR_HOTSPOT
 if "%subop%"=="2" goto :RED_DESBLOQUEAR_HOTSPOT
@@ -716,10 +716,9 @@ goto :SUBMENU_REDES
 
 :RED_CONFIG_IP
 cls
-echo %P141%
-echo ════════════════════════════════════════════════════════
-echo         ASISTENTE DE CONFIGURACION IP (MANUAL)
-echo ════════════════════════════════════════════════════════
+echo %LBLUE%════════════════════════════════════════════════════════%RST%
+echo %LBLUE%        ASISTENTE DE CONFIGURACION IP (MANUAL)%RST%
+echo %LBLUE%════════════════════════════════════════════════════════%RST%
 echo.
 echo [1/5] Identificando interfaces de red...
 echo.
@@ -727,34 +726,34 @@ netsh interface show interface
 echo.
 echo     Escribe el nombre EXACTO de la interfaz (Ej: Ethernet).
 echo.
-set /p ADAPTADOR="%CW%Nombre de la interfaz: %P141%"
+set /p ADAPTADOR="%CW%Nombre de la interfaz: %LBLUE%"
 
 cls
-echo ════════════════════════════════════════════════════════
-echo               CONFIGURANDO: %ADAPTADOR%
-echo ════════════════════════════════════════════════════════
+echo %LBLUE%════════════════════════════════════════════════════════%RST%
+echo %LBLUE%              CONFIGURANDO: %ADAPTADOR%%RST%
+echo %LBLUE%════════════════════════════════════════════════════════%RST%
 echo.
 echo [2/5] Ingresa los datos de conexion...
 echo.
-set /p IP="%CW%   - Direccion IP: %P141%"
-set /p MASCARA="%CW%   - Mascara (Default: 255.255.255.0): %P141%"
-set /p PUERTA="%CW%   - Puerta de enlace: %P141%"
+set /p IP="%CW%   - Direccion IP: %LBLUE%"
+set /p MASCARA="%CW%   - Mascara (Default: 255.255.255.0): %LBLUE%"
+set /p PUERTA="%CW%   - Puerta de enlace: %LBLUE%"
 echo.
 echo [3/5] Configurando Servidores DNS...
-set /p DNS1="%CW%   - DNS Preferido: %P141%"
-set /p DNS2="%CW%   - DNS Alternativo: %P141%"
+set /p DNS1="%CW%   - DNS Preferido: %LBLUE%"
+set /p DNS2="%CW%   - DNS Alternativo: %LBLUE%"
 
 cls
-echo ════════════════════════════════════════════════════════
-echo                   RESUMEN DE DATOS
-echo ════════════════════════════════════════════════════════
+echo %LBLUE%════════════════════════════════════════════════════════%RST%
+echo %LBLUE%                  RESUMEN DE DATOS%RST%
+echo %LBLUE%════════════════════════════════════════════════════════%RST%
 echo.
 echo     Interfaz : %ADAPTADOR%
 echo     IP       : %IP%
 echo     DNS 1    : %DNS1%
 echo.
 echo ════════════════════════════════════════════════════════
-echo %CW%Presiona ENTER para aplicar cambios...%P141%
+echo %LBLUE%Presiona ENTER para aplicar cambios...%RST%
 pause >nul
 
 echo.
@@ -767,7 +766,7 @@ netsh interface ip add dns name="%ADAPTADOR%" %DNS2% index=2 >nul 2>&1
 
 echo.
 echo ════════════════════════════════════════════════════════
-echo %CW%PROCESO FINALIZADO. Probando conexion...%P141%
+echo %LBLUE%PROCESO FINALIZADO. Probando conexion...%RST%
 ping 8.8.8.8 -n 2
 echo.
 call :REGISTRAR_LOG "CONFIG_IP_ESTATICA" "Redes" "OK"
@@ -780,11 +779,10 @@ goto :MENU_PRINCIPAL
 :: SECCION 5: SUBMENU ACTIVACION
 :: ==========================================
 :ACTIVACION
-color 0B
 cls
-echo ════════════════════════════════════════════════════════
-echo             CENTRO DE LICENCIAS Y ACTIVACION
-echo ════════════════════════════════════════════════════════
+echo %ACT%════════════════════════════════════════════════════════%RST%
+echo %ACT%            CENTRO DE LICENCIAS Y ACTIVACION%RST%
+echo %ACT%════════════════════════════════════════════════════════%RST%
 echo.
 echo    [1] INSTALAR KEY OFFICE LTSC 2021
 echo        - Instala la clave para Office Pro Plus 2021.
@@ -796,8 +794,8 @@ echo        - Opciones para Windows, HWID, KMS38, etc.
 echo.
 echo    [3] Volver al Menu Principal
 echo.
-echo ════════════════════════════════════════════════════════
-set /p actop="Selecciona opcion: "
+echo %ACT%════════════════════════════════════════════════════════%RST%
+set /p actop="%ACT%Selecciona opcion: %RST%"
 
 if "%actop%"=="1" goto :KEY_OFFICE_2021
 if "%actop%"=="2" goto :MAS_POWERSHELL
@@ -816,7 +814,6 @@ if exist "%ProgramFiles%\Microsoft Office\Office16\ospp.vbs" set "OFFICE_DIR=%Pr
 if exist "%ProgramFiles(x86)%\Microsoft Office\Office16\ospp.vbs" set "OFFICE_DIR=%ProgramFiles(x86)%\Microsoft Office\Office16"
 
 if not defined OFFICE_DIR (
-  color 0C
   echo.
   echo [ERROR] No se encontro Office 2016/2019/2021 instalado.
   echo  Verifica que este instalado en la ruta por defecto.
@@ -925,7 +922,7 @@ echo.
 echo    [1] SI - Descargar e instalar actualizacion
 echo    [2] NO - Volver al menu principal
 echo.
-set /p update_choice_manual="%CYAN%Selecciona una opcion: %RST%"
+set /p update_choice_manual="%LBLUE%Selecciona una opcion: %RST%"
 
 if "%update_choice_manual%"=="1" goto :PROCESAR_ACTUALIZACION
 goto :MENU_PRINCIPAL
@@ -1013,15 +1010,15 @@ goto :MENU_PRINCIPAL
 :OPCIONES_SISTEMA
 cls
 echo.
-echo ════════════════════════════════════════════════════════
-echo                  OPCIONES DEL SISTEMA
-echo ════════════════════════════════════════════════════════
+echo %SYS%════════════════════════════════════════════════════════%RST%
+echo %SYS%                 OPCIONES DEL SISTEMA%RST%
+echo %SYS%════════════════════════════════════════════════════════%RST%
 echo.
 echo  [1] Reiniciar equipo
 echo  [2] Cerrar sesion
 echo  [0] Volver
 echo.
-set /p "OPCION_SIS=Selecciona una opcion: "
+set /p "OPCION_SIS=%SYS%Selecciona una opcion: %RST%"
 
 if "%OPCION_SIS%"=="1" goto :REINICIAR
 if "%OPCION_SIS%"=="2" goto :CERRAR_SESION
@@ -1046,9 +1043,9 @@ goto :EOF
 :EXITO_RETORNO
 cls
 echo.
-echo ════════════════════════════════════════════════════════
-echo             OPERACION COMPLETADA CON EXITO
-echo ════════════════════════════════════════════════════════
+echo %MINT%════════════════════════════════════════════════════════%RST%
+echo %MINT%            OPERACION COMPLETADA CON EXITO%RST%
+echo %MINT%════════════════════════════════════════════════════════%RST%
 echo.
 echo ⠀⠀⠀⠀⠀⣴⠉⡙⠳⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣠⠤⣚⡯⠴⢬⣱⡀⠀
 echo ⠀⠀⠀⠀⢰⡇⣷⡌⢲⣄⡑⢢⡀⠀⠀⠀⠀⠀⢠⠾⢋⠔⣨⣴⣿⣷⡌⠇⡇⠀
