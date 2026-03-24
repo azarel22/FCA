@@ -1,7 +1,7 @@
 @echo off
 :: ==========================================
 :: Creado por: Eichhh
-:: Versión: 10.4 Colores nuevos
+:: Versión: 10.5 integracion de MRT y nuevas claves de registro
 :: ==========================================
 
 :: Deja de ver mi codigo, inche chismoso
@@ -36,23 +36,24 @@ set "GITHUB_USER=azarel22"
 set "GITHUB_REPO=FCA"
 set "GITHUB_BRANCH=main"
 set "SCRIPT_NAME=RTIC_Hub_FCA.bat"
-set "VERSION_ACTUAL=10.4"
+set "VERSION_ACTUAL=10.5"
 :: ==========================================
 
 :: ==========================================
 :: CONFIGURACIÓN DE LOGS
 :: ==========================================
-set "LOG_DIR=C:\Archivos_FCA_UAEMEX\Logs\RTIC_Log.csv"
-set "LOG_FILE=%LOG_DIR%\RTIC_Log.csv"
+set "LOG_DIR=%TEMP%"
+set "LOG_FILE=%TEMP%\RTIC_Log.csv"
 :: ==========================================
 
 :: ==========================================
 :: INICIALIZAR SISTEMA DE LOGS
 :: ==========================================
+set "LOG_DIR=%TEMP%\RTIC_Updates"
+set "LOG_FILE=%TEMP%\RTIC_Updates\RTIC_Log.csv"
 if not exist "%LOG_DIR%" mkdir "%LOG_DIR%" >nul 2>&1
-if not exist "%LOG_FILE%" (
-  echo FECHA,HORA,NUMERO_SERIE,ACCION,MODULO,RESULTADO,VERSION_SCRIPT >> "%LOG_FILE%"
-)
+if exist "%LOG_FILE%" del /f /q "%LOG_FILE%" >nul 2>&1
+type nul > "%LOG_FILE%"
 for /f "tokens=2 delims==." %%a in ('wmic os get LocalDateTime /value 2^>nul') do set "DT=%%a"
 set "LOG_FECHA=%DT:~0,4%-%DT:~4,2%-%DT:~6,2%"
 set "LOG_HORA=%DT:~8,2%:%DT:~10,2%:%DT:~12,2%"
@@ -81,6 +82,12 @@ set "OPT=%ESC%[38;2;140;230;100m"
 set "ACT=%ESC%[38;2;255;185;100m"
 set "SYS=%ESC%[38;2;190;175;255m"
 :: -----------------------------------------------
+
+:: ==========================================
+:: OPERADOR
+:: ==========================================
+set "OPERADOR="
+set /p "OPERADOR=Ingresa tu nombre de operador: "
 
 title RTIC_HUB_FCA
 
@@ -194,14 +201,13 @@ for /L %%S in (1,1,13) do (
 )
 
 echo %ESC%[?25h
-call :REGISTRAR_LOG "INICIO_SESION" "Sistema" "OK"
 goto :MENU_PRINCIPAL
 
 :REGISTRAR_LOG
 for /f "tokens=2 delims==." %%a in ('wmic os get LocalDateTime /value 2^>nul') do set "DT_NOW=%%a"
 set "L_FECHA=%DT_NOW:~0,4%-%DT_NOW:~4,2%-%DT_NOW:~6,2%"
 set "L_HORA=%DT_NOW:~8,2%:%DT_NOW:~10,2%:%DT_NOW:~12,2%"
-echo %L_FECHA%,%L_HORA%,%SERIAL_NUM%,%~1,%~2,%~3,%VERSION_ACTUAL% >> "%LOG_FILE%"
+echo %L_FECHA%,%L_HORA%,,%SERIAL_NUM%,,%~1,,%~2,%OPERADOR% >> "%LOG_FILE%"
 goto :eof
 
 :SKIP_LOG_FUNCTION
@@ -341,8 +347,11 @@ echo.
 echo  %YELL%  [7]  %BOLD%%CW%Opciones del Sistema%RST%
 echo  %DGRAY%       Reiniciar equipo o cerrar sesion.%RST%
 echo.
+echo  %YELL%  [8]  %BOLD%%CW%Herramienta de Reparacion MRT%RST%
+echo  %DGRAY%       Ejecuta el removedor de software malintencionado.%RST%
+echo.
 echo  %ORANGE%═══════════════════════════════════════════════════════════%RST%
-echo  %RED%  [8]  %BOLD%Salir%RST%
+echo  %RED%  [9]  %BOLD%Salir%RST%
 echo  %ORANGE%═══════════════════════════════════════════════════════════%RST%
 echo.
 set /p opcion="%ORANGE%  >> %RST%"
@@ -354,7 +363,8 @@ if "%opcion%"=="4" goto :SUBMENU_REDES
 if "%opcion%"=="5" goto :ACTIVACION
 if "%opcion%"=="6" goto :VERIFICAR_ACTUALIZACIONES_MANUAL
 if "%opcion%"=="7" goto :OPCIONES_SISTEMA
-if "%opcion%"=="8" exit
+if "%opcion%"=="8" goto :EJECUTAR_MRT
+if "%opcion%"=="9" exit
 goto :MENU_PRINCIPAL
 
 :: ==========================================
@@ -412,6 +422,7 @@ goto :SUBMENU_PANTALLA
 
 :PANTALLA_INSTITUCIONAL
 cls
+call :REGISTRAR_LOG "TWC010" "INICIADO"
 echo.
 echo [1/7] Deteniendo interfaz visual...
 taskkill /f /im explorer.exe >nul 2>&1
@@ -480,11 +491,13 @@ echo.
 echo Actualizando politicas...
 gpupdate /force >nul 2>&1
 start explorer.exe
-call :REGISTRAR_LOG "BLOQUEAR_FONDO" "Pantalla" "OK"
+call :REGISTRAR_LOG "LWC002" "INICIADO"
+call :REGISTRAR_LOG "LWC002" "COMPLETADO"
 goto :EXITO_RETORNO
 
 :PANTALLA_RESTAURAR
 cls
+call :REGISTRAR_LOG "UWC002" "INICIADO"
 echo.
 echo [1/3] Deteniendo interfaz...
 taskkill /f /im explorer.exe >nul 2>&1
@@ -505,11 +518,12 @@ reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\ThemeManager" /v "ThemeR
 RUNDLL32.EXE user32.dll,UpdatePerUserSystemParameters
 gpupdate /force >nul 2>&1
 start explorer.exe
-call :REGISTRAR_LOG "RESTAURAR_PERMISOS_FONDO" "Pantalla" "OK"
+call :REGISTRAR_LOG "UWC002" "COMPLETADO"
 goto :EXITO_RETORNO
 
 :Fondos
 cls
+call :REGISTRAR_LOG "WID031" "INICIADO"
 echo.
 echo [1/3] Preparando carpeta C:\Archivos_FCA_UAEMEX...
 if not exist "C:\Archivos_FCA_UAEMEX" mkdir "C:\Archivos_FCA_UAEMEX" >nul 2>&1
@@ -521,7 +535,7 @@ curl -L -s -o "C:\Archivos_FCA_UAEMEX\lock_screen_wallpaper_fca.png" "https://ra
 
 echo [3/3] Abriendo carpeta...
 start "" "C:\Archivos_FCA_UAEMEX"
-call :REGISTRAR_LOG "DESCARGAR_FONDOS" "Pantalla" "OK"
+call :REGISTRAR_LOG "WID031" "COMPLETADO"
 goto :EXITO_RETORNO
 
 :: ==========================================
@@ -553,14 +567,15 @@ if "%subop%"=="3" goto :MENU_PRINCIPAL
 goto :SUBMENU_OPTIMIZADOR
 
 :APLICAR_OPTIMIZACION
+call :REGISTRAR_LOG "TSO013" "INICIADO"
 cls
 echo.
-echo [1/3] Configurando ARRANQUE (Procesadores)...
+echo [1/5] Configurando ARRANQUE (Procesadores)...
 :: Esto equivale a ir a msconfig y marcar el maximo de nucleos manualmente
 bcdedit /set {current} numproc %NUMBER_OF_PROCESSORS% >nul 2>&1
 echo  - Nucleos configurados al maximo: %NUMBER_OF_PROCESSORS%
 
-echo [2/3] Configurando EFECTOS VISUALES (Rendimiento)...
+echo [2/5] Configurando EFECTOS VISUALES (Rendimiento)...
 :: Establece "Ajustar para obtener el mejor rendimiento" como base
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects" /v VisualFXSetting /t REG_DWORD /d 2 /f >nul 2>&1
 
@@ -573,8 +588,19 @@ reg add "HKCU\Control Panel\Desktop\WindowMetrics" /v MinAnimate /t REG_SZ /d 0 
 :: Acelera el despliegue de menus
 reg add "HKCU\Control Panel\Desktop" /v MenuShowDelay /t REG_SZ /d 0 /f >nul 2>&1
 
-echo [3/3] Aplicando cambios...
-:: Reiniciar explorer para aplicar efectos visuales
+echo [3/5] Limpiando temporales del sistema...
+del /s /f /q "%TEMP%\*.*" >nul 2>&1
+for /d %%i in ("%TEMP%\*") do (
+  if /i not "%%i"=="%TEMP%\RTIC_Updates" rd /s /q "%%i" >nul 2>&1
+)
+del /s /f /q "C:\Windows\Temp\*.*" >nul 2>&1
+for /d %%i in ("C:\Windows\Temp\*") do rd /s /q "%%i" >nul 2>&1
+
+echo [4/5] Limpiando archivos recientes y prefetch...
+del /s /f /q "%APPDATA%\Microsoft\Windows\Recent\*.*" >nul 2>&1
+del /s /f /q "C:\Windows\Prefetch\*.*" >nul 2>&1
+
+echo [5/5] Aplicando cambios visuales...
 taskkill /f /im explorer.exe >nul 2>&1
 start explorer.exe
 echo.
@@ -582,12 +608,13 @@ echo [EXITO] Optimizacion aplicada.
 echo  Las fuentes se veran bien, pero el resto estara optimizado.
 echo  NOTA: Reinicia el equipo para aplicar los nucleos del CPU.
 echo.
-call :REGISTRAR_LOG "OPTIMIZACION_APLICADA" "Optimizador" "OK"
+call :REGISTRAR_LOG "TSO013" "COMPLETADO"
 pause
 goto :MENU_PRINCIPAL
 
 :RESTAURAR_OPTIMIZACION
 cls
+call :REGISTRAR_LOG "RSO015" "INICIADO"
 echo.
 echo [1/3] Restaurando ARRANQUE (Default)...
 :: Borra la entrada numproc para que Windows decida (Default)
@@ -606,7 +633,7 @@ start explorer.exe
 echo.
 echo [EXITO] Configuracion restaurada a valores de fabrica.
 echo.
-call :REGISTRAR_LOG "OPTIMIZACION_RESTAURADA" "Optimizador" "OK"
+call :REGISTRAR_LOG "RSO015" "COMPLETADO"
 pause
 goto :MENU_PRINCIPAL
 
@@ -650,6 +677,7 @@ goto :SUBMENU_REDES
 
 :RED_BLOQUEAR_HOTSPOT
 cls
+call :REGISTRAR_LOG "LHT404" "INICIADO"
 echo.
 echo [PROCESANDO] Aplicando politicas de red...
 echo.
@@ -665,12 +693,13 @@ gpupdate /force >nul 2>&1
 echo.
 echo [INFO] Bloqueo aplicado. REINICIA para ver todos los cambios.
 echo.
-call :REGISTRAR_LOG "BLOQUEAR_HOTSPOT" "Redes" "OK"
+call :REGISTRAR_LOG "LHT404" "COMPLETADO"
 pause
 goto :EXITO_RETORNO
 
 :RED_DESBLOQUEAR_HOTSPOT
 cls
+call :REGISTRAR_LOG "UHT000" "INICIADO"
 echo.
 echo [PROCESANDO] Eliminando bloqueos de red...
 echo.
@@ -686,7 +715,7 @@ gpupdate /force >nul 2>&1
 echo.
 echo [INFO] Bloqueo eliminado. Reinicia si no aparece la opcion.
 echo.
-call :REGISTRAR_LOG "DESBLOQUEAR_HOTSPOT" "Redes" "OK"
+call :REGISTRAR_LOG "UHT000" "COMPLETADO"
 pause
 goto :EXITO_RETORNO
 
@@ -694,7 +723,7 @@ goto :EXITO_RETORNO
 :: SPEED TEST
 ::==========================================
 :SPEED_TEST
-call :REGISTRAR_LOG "SPEED_TEST" "Redes" "INICIANDO"
+call :REGISTRAR_LOG "SPT458" "INICIADO"
 if exist "%TEMP%\speedtest_tmp.ps1" del "%TEMP%\speedtest_tmp.ps1" >nul 2>&1
 curl -L -s -f "https://raw.githubusercontent.com/azarel22/FCA/refs/heads/main/speedtest.ps1" -o "%TEMP%\speedtest_tmp.ps1" 2>nul
 if not exist "%TEMP%\speedtest_tmp.ps1" (
@@ -703,7 +732,7 @@ if not exist "%TEMP%\speedtest_tmp.ps1" (
   echo  Verifica tu conexion a internet.
   echo.
   pause
-  call :REGISTRAR_LOG "SPEED_TEST" "Redes" "Error"
+  call :REGISTRAR_LOG "SPT458" "ERROR"
   goto :SUBMENU_REDES
 )
 for /f "tokens=2 delims==" %%a in ('reg query "HKCU\Console" /v FontSize 2^>nul ^| findstr FontSize') do set "FONT_BAK=%%a"
@@ -711,11 +740,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command "& { $host.UI.RawUI.Windo
 if defined FONT_BAK reg add "HKCU\Console" /v FontSize /t REG_DWORD /d "%FONT_BAK%" /f >nul 2>&1
 mode con: cols=90 lines=42
 if exist "%TEMP%\speedtest_tmp.ps1" del "%TEMP%\speedtest_tmp.ps1" >nul 2>&1
-call :REGISTRAR_LOG "SPEED_TEST" "Redes" "Completado"
+call :REGISTRAR_LOG "SPT458" "COMPLETADO"
 goto :SUBMENU_REDES
 
 :RED_CONFIG_IP
 cls
+call :REGISTRAR_LOG "IPCv04" "INICIADO"
 echo %LBLUE%════════════════════════════════════════════════════════%RST%
 echo %LBLUE%        ASISTENTE DE CONFIGURACION IP (MANUAL)%RST%
 echo %LBLUE%════════════════════════════════════════════════════════%RST%
@@ -769,7 +799,7 @@ echo ═════════════════════════
 echo %LBLUE%PROCESO FINALIZADO. Probando conexion...%RST%
 ping 8.8.8.8 -n 2
 echo.
-call :REGISTRAR_LOG "CONFIG_IP_ESTATICA" "Redes" "OK"
+call :REGISTRAR_LOG "IPCv04" "COMPLETADO"
 pause
 :: LIMPIEZA TOTAL ANTES DE SALIR
 echo %RST%
@@ -804,6 +834,7 @@ goto :ACTIVACION
 
 :: --- OPCION 1: OFFICE KEY ---
 :KEY_OFFICE_2021
+call :REGISTRAR_LOG "OOA021" "INICIADO"
 cls
 echo.
 echo [1/3] Buscando instalacion de Office...
@@ -834,20 +865,21 @@ cscript //nologo ospp.vbs /act
 echo.
 echo [RESULTADO] Proceso finalizado. Verifica los mensajes anteriores.
 echo.
-call :REGISTRAR_LOG "ACTIVAR_OFFICE_LTSC" "Licencias" "OK"
+call :REGISTRAR_LOG "OOA021" "COMPLETADO"
 pause
 goto :ACTIVACION
 
 :: --- OPCION 2: POWERSHELL Masgrave ---
 :MAS_POWERSHELL
 cls
+call :REGISTRAR_LOG "PAA999" "INICIADO"
 echo.
 echo [INFO] Lanzando PowerShell como Administrador...
 echo  Espera a que cargue la ventana azul.
 start powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://get.activated.win | iex"
 echo.
 echo [PROCESO] Script ejecutado en segunda ventana.
-call :REGISTRAR_LOG "ACTIVAR_MAS_WINDOWS" "Licencias" "LANZADO"
+call :REGISTRAR_LOG "PAA999" "COMPLETADO"
 pause
 goto :ACTIVACION
 
@@ -1007,6 +1039,31 @@ start /min "" "%TEMP%\RTIC_Updates\update_script.bat"
 exit
 goto :MENU_PRINCIPAL
 
+:: ==========================================
+:: HERRAMIENTA DE REPARACION MRT
+:: ==========================================
+:EJECUTAR_MRT
+cls
+echo.
+echo  %ORANGE%═══════════════════════════════════════════════════════════%RST%
+echo  %BOLD%%CW%  HERRAMIENTA DE REPARACION DE WINDOWS (MRT)%RST%
+echo  %ORANGE%═══════════════════════════════════════════════════════════%RST%
+echo.
+echo  %DGRAY%  Lanzando el Removedor de Software Malintencionado...%RST%
+echo  %DGRAY%  Esta herramienta es proporcionada por Microsoft.%RST%
+echo.
+call :REGISTRAR_LOG "MRT02n" "INICIADO"
+mrt
+call :REGISTRAR_LOG "MRT02n" "COMPLETADO"
+echo.
+echo  %MINT%  MRT finalizado. Regresando al menu principal...%RST%
+echo.
+pause
+goto :MENU_PRINCIPAL
+
+:: ==========================================
+:: Para aplicar cambios
+:: ==========================================
 :OPCIONES_SISTEMA
 cls
 echo.
