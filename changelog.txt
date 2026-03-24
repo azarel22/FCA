@@ -1,6 +1,6 @@
-10.4
+10.5
 - Se arreglo la actualizacion
 - Actualicen desde una version anterior a la 10.0
 - Cambien el nombre a RTIC_Hub_FCA para que funcione
-- Integracion de logs en formato CVS
-- Mejoras esteticas
+- Mejor creacion de logs y entrada a futuras novedades
+- Integracion de analizis de malware
