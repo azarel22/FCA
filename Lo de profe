@@ -1,0 +1,78 @@
+import random
+import time
+import uuid
+from datetime import datetime, timedelta
+import csv
+import json
+import os
+
+# Configuración
+NUM_BATCH_RECORDS = 100
+STREAM_DELAY = 0.1  # segundos entre eventos
+OUTPUT_DIR = "data"
+
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+# ----------------------------
+# Generador de eventos
+# ----------------------------
+def generate_event():
+    return {
+        "event_id": str(uuid.uuid4()),
+        "user_id": random.randint(1, 1000),
+        "event_type": random.choice(["click", "view", "purchase"]),
+        "amount": round(random.uniform(10, 500), 2),
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+# ----------------------------
+# Generación Batch (histórico)
+# ----------------------------
+def generate_batch_data():
+    print("Generando datos batch..)")
+    
+    start_date = datetime.utcnow() - timedelta(days=30)
+
+    with open(f"{OUTPUT_DIR}/batch_data.csv", "w", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=[
+            "event_id", "user_id", "event_type", "amount", "timestamp"
+        ])
+        writer.writeheader()
+
+        for _ in range(NUM_BATCH_RECORDS):
+            event = generate_event()
+            event["timestamp"] = (
+                start_date + timedelta(
+                    seconds=random.randint(0, 30*24*60*60)
+                )
+            ).isoformat()
+
+            writer.writerow(event)
+
+    print("Batch listo. ")
+
+# ----------------------------
+# Simulación de Streaming
+# ----------------------------
+def simulate_streaming():
+    print("Iniciando streaming...)")
+    
+    with open(f"{OUTPUT_DIR}/stream_data.json", "a") as file:
+        while True:
+            event = generate_event()
+            file.write(json.dumps(event) + "\n")
+            print("Evento:", event)
+
+            time.sleep(STREAM_DELAY)
+
+# ----------------------------
+# MAIN
+# ----------------------------
+if __name__ == "__main__":
+    generate_batch_data()
+    
+    # Ejecuta streaming (Ctrl+C para parar)
+    try:
+        simulate_streaming()
+    except KeyboardInterrupt:
+        print("\nStreaming detenido. '.")
