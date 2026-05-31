@@ -1,6 +1,7 @@
-10.5
-- Se arreglo la actualizacion
+12.0
+- Nuevo modulo de instalacion inicial
+- Nuevas integraciones para versiones futuras
+- Instlacion para profesor y alumno ya disponibles
+
 - Actualicen desde una version anterior a la 10.0
 - Cambien el nombre a RTIC_Hub_FCA para que funcione
-- Mejor creacion de logs y entrada a futuras novedades
-- Integracion de analizis de malware
