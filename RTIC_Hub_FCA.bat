@@ -1,7 +1,7 @@
 @echo off
 :: ==========================================
 :: Creado por: Eichhh
-:: Versión: 12.0 Integracion con instaladores e integraciones para el todo en 1
+:: Versión: 12.1 Integracion con instaladores e integraciones para el todo en 1 y blindaje del numero de serie
 :: ==========================================
 
 :: Deja de ver mi codigo, inche chismoso
@@ -36,7 +36,7 @@ set "GITHUB_USER=azarel22"
 set "GITHUB_REPO=FCA"
 set "GITHUB_BRANCH=main"
 set "SCRIPT_NAME=RTIC_Hub_FCA.bat"
-set "VERSION_ACTUAL=12.0"
+set "VERSION_ACTUAL=12.1"
 :: ==========================================
 
 :: ==========================================
@@ -316,8 +316,9 @@ goto :MENU_PRINCIPAL
 color 00
 cls
 
-for /f "tokens=2 delims==" %%a in ('wmic bios get serialnumber /value 2^>nul') do set "SERIAL_NUM=%%a"
-set "SERIAL_NUM=%SERIAL_NUM: =%"
+set "SERIAL_NUM="
+for /f "usebackq delims=" %%a in (`powershell -NoProfile -Command "(Get-CimInstance Win32_Bios).SerialNumber" 2^>nul`) do set "SERIAL_NUM=%%a"
+if defined SERIAL_NUM set "SERIAL_NUM=%SERIAL_NUM: =%"
 if "%SERIAL_NUM%"=="" set "SERIAL_NUM=No disponible"
 
 echo.
