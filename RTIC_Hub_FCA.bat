@@ -382,7 +382,7 @@ echo.
 echo    [1] Instalar Paqueteria para alumnos
 echo    [2] Instalar Paqueteria para docentes
 echo    [3] Instalar Drivers de impresora
-echo    [4] Iniciar Driver Booster
+echo    [4] Iniciar Driver Booster                    %DGRAY%[ En desarrollo ]%RST%
 echo    [0] Volver al Menu Principal
 echo.
 echo  %ORANGE%═══════════════════════════════════════════════════════════%RST%
