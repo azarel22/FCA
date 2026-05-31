@@ -1,7 +1,7 @@
 @echo off
 :: ==========================================
 :: Creado por: Eichhh
-:: Versión: 10.5 integracion de MRT y nuevas claves de registro
+:: Versión: 12.0 Integracion con instaladores e integraciones para el todo en 1
 :: ==========================================
 
 :: Deja de ver mi codigo, inche chismoso
@@ -36,7 +36,7 @@ set "GITHUB_USER=azarel22"
 set "GITHUB_REPO=FCA"
 set "GITHUB_BRANCH=main"
 set "SCRIPT_NAME=RTIC_Hub_FCA.bat"
-set "VERSION_ACTUAL=10.5"
+set "VERSION_ACTUAL=12.0"
 :: ==========================================
 
 :: ==========================================
@@ -326,7 +326,7 @@ echo  %BOLD%%CW%  RTIC HUB FCA%RST%  %LBLUE%Sistema de Gestion UAEMEX%RST%  %MGR
 echo  %MGRAY%  Numero de serie del equipo: %MINT%%BOLD%%SERIAL_NUM%%RST%
 echo  %ORANGE%═══════════════════════════════════════════════════════════%RST%
 echo.
-echo  %YELL%  [1]  %BOLD%%CW%Instalacion Inicial%RST%               %DGRAY%[ En desarrollo ]%RST%
+echo  %YELL%  [1]  %BOLD%%CW%Instalacion Inicial%RST%
 echo  %DGRAY%       Drivers, paqueteria basica, configuracion inicial.%RST%
 echo.
 echo  %YELL%  [2]  %BOLD%%CW%Configuracion de Pantalla%RST%
@@ -356,7 +356,7 @@ echo  %ORANGE%══════════════════════
 echo.
 set /p opcion="%ORANGE%  >> %RST%"
 
-if "%opcion%"=="1" goto :EN_DESARROLLO
+if "%opcion%"=="1" goto :INSTALACION_INICIAL
 if "%opcion%"=="2" goto :SUBMENU_PANTALLA
 if "%opcion%"=="3" goto :SUBMENU_OPTIMIZADOR
 if "%opcion%"=="4" goto :SUBMENU_REDES
@@ -366,6 +366,218 @@ if "%opcion%"=="7" goto :OPCIONES_SISTEMA
 if "%opcion%"=="8" goto :EJECUTAR_MRT
 if "%opcion%"=="9" exit
 goto :MENU_PRINCIPAL
+
+
+:: ==========================================
+:: SECCION 1: INSTALACION INICIAL
+:: ==========================================
+:INSTALACION_INICIAL
+cls
+echo.
+echo  %ORANGE%═══════════════════════════════════════════════════════════%RST%
+echo  %BOLD%%CW%  INSTALACION INICIAL - DRIVERS Y PAQUETERIA%RST%
+echo  %ORANGE%═══════════════════════════════════════════════════════════%RST%
+echo.
+echo    [1] Instalar Paqueteria para alumnos
+echo    [2] Instalar Paqueteria para docentes
+echo    [3] Instalar Drivers de impresora
+echo    [4] Iniciar Driver Booster
+echo    [0] Volver al Menu Principal
+echo.
+echo  %ORANGE%═══════════════════════════════════════════════════════════%RST%
+set /p drvop="%ORANGE%  >> %RST%"
+
+if "%drvop%"=="1" goto :PALUMNOS
+if "%drvop%"=="2" goto :PDOCENTES
+if "%drvop%"=="3" goto :IMPRESORAS
+if "%drvop%"=="4" goto :EN_DESARROLLO
+if "%drvop%"=="0" goto :MENU_PRINCIPAL
+goto :INSTALACION_INICIAL
+
+:: ----------------------------------------------------------
+:: [1] PAQUETERIA ALUMNOS (UsInst.exe)
+:: ----------------------------------------------------------
+:PALUMNOS
+cls
+echo.
+echo  %ORANGE%═══════════════════════════════════════════════════════════%RST%
+echo  %BOLD%%CW%  PAQUETERIA PARA ALUMNOS%RST%
+echo  %ORANGE%═══════════════════════════════════════════════════════════%RST%
+echo.
+call :REGISTRAR_LOG "USR_INST" "INICIADO"
+
+:: Verificar internet
+if "%FLAG_INTERNET%"=="FAIL" (
+    echo  %R_ERR%[ERROR] Se requiere internet para descargar la paqueteria.%RST%
+    echo.
+    pause
+    goto :INSTALACION_INICIAL
+)
+
+:: Garantizar carpeta RTIC_Data
+if not exist "%DATA_FOLDER%" mkdir "%DATA_FOLDER%" >nul 2>&1
+
+set "USINST_PATH=%DATA_FOLDER%\UsInst.exe"
+
+echo  %CG%  [1/3] Descargando paqueteria de alumnos desde GitHub...%RST%
+echo.
+curl -L -s -f "https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/refs/heads/main/Assets/UsInst.exe" -o "%USINST_PATH%"
+
+if errorlevel 1 (
+    echo  %R_ERR%[ERROR] No se pudo descargar UsInst.exe%RST%
+    echo  %DGRAY%  Verifica tu conexion e intentalo de nuevo.%RST%
+    echo.
+    pause
+    call :REGISTRAR_LOG "USR_INST" "ERROR_DESCARGA"
+    goto :INSTALACION_INICIAL
+)
+echo  %MINT%  Descarga completada.%RST%
+echo.
+
+echo  %CG%  [2/3] Copiando accesos directos al escritorio...%RST%
+curl -L -s -o "%USERPROFILE%\Desktop\Excel.lnk" "https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/refs/heads/main/Assets/shorcuts/Excel.lnk"
+curl -L -s -o "%USERPROFILE%\Desktop\PowerPoint.lnk" "https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/refs/heads/main/Assets/shorcuts/PowerPoint.lnk"
+curl -L -s -o "%USERPROFILE%\Desktop\Word.lnk" "https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/refs/heads/main/Assets/shorcuts/Word.lnk"
+echo.
+
+:: Ejecutar el instalador
+echo  %CG%  [3/3] Ejecutando instalador de alumnos...%RST%
+echo  %DGRAY%  Espera a que termine el instalador antes de continuar.%RST%
+echo.
+start /wait "" "%USINST_PATH%"
+
+call :REGISTRAR_LOG "USR_INST" "COMPLETADO"
+echo.
+echo  %MINT%[EXITO] Paqueteria de alumnos instalada.%RST%
+echo.
+pause
+goto :INSTALACION_INICIAL
+
+:: ----------------------------------------------------------
+:: [2] PAQUETERIA DOCENTES (ProInst.exe)
+:: ----------------------------------------------------------
+:PDOCENTES
+cls
+echo.
+echo  %ORANGE%═══════════════════════════════════════════════════════════%RST%
+echo  %BOLD%%CW%  PAQUETERIA PARA DOCENTES%RST%
+echo  %ORANGE%═══════════════════════════════════════════════════════════%RST%
+echo.
+call :REGISTRAR_LOG "PRO_INST" "INICIADO"
+
+if "%FLAG_INTERNET%"=="FAIL" (
+    echo  %R_ERR%[ERROR] Se requiere internet para descargar la paqueteria.%RST%
+    echo.
+    pause
+    goto :INSTALACION_INICIAL
+)
+
+if not exist "%DATA_FOLDER%" mkdir "%DATA_FOLDER%" >nul 2>&1
+
+set "PROINST_PATH=%DATA_FOLDER%\ProInst.exe"
+
+echo  %CG%  [1/3] Descargando paqueteria de docentes desde GitHub...%RST%
+echo.
+curl -L -s -f "https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/refs/heads/main/Assets/ProInst.exe" -o "%PROINST_PATH%"
+
+if errorlevel 1 (
+    echo  %R_ERR%[ERROR] No se pudo descargar ProInst.exe%RST%
+    echo  %DGRAY%  Verifica tu conexion e intentalo de nuevo.%RST%
+    echo.
+    pause
+    call :REGISTRAR_LOG "PRO_INST" "ERROR_DESCARGA"
+    goto :INSTALACION_INICIAL
+)
+echo  %MINT%  Descarga completada.%RST%
+echo.
+
+echo  %CG%  [2/3] Copiando accesos directos al escritorio...%RST%
+curl -L -s -o "%USERPROFILE%\Desktop\Excel.lnk" "https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/refs/heads/main/Assets/shorcuts/Excel.lnk"
+curl -L -s -o "%USERPROFILE%\Desktop\PowerPoint.lnk" "https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/refs/heads/main/Assets/shorcuts/PowerPoint.lnk"
+curl -L -s -o "%USERPROFILE%\Desktop\Word.lnk" "https://raw.githubusercontent.com/%GITHUB_USER%/%GITHUB_REPO%/refs/heads/main/Assets/shorcuts/Word.lnk"
+echo.
+
+echo  %CG%  [3/3] Ejecutando instalador de docentes...%RST%
+echo  %DGRAY%  Espera a que termine el instalador antes de continuar.%RST%
+echo.
+start /wait "" "%PROINST_PATH%"
+
+call :REGISTRAR_LOG "PRO_INST" "COMPLETADO"
+echo.
+echo  %MINT%[EXITO] Paqueteria de docentes instalada.%RST%
+echo.
+pause
+goto :INSTALACION_INICIAL
+
+:: ----------------------------------------------------------
+:: [3] IMPRESORAS
+:: ----------------------------------------------------------
+:IMPRESORAS
+cls
+echo.
+echo  %ORANGE%═══════════════════════════════════════════════════════════%RST%
+echo  %BOLD%%CW%  DRIVERS DE IMPRESORAS%RST%
+echo  %ORANGE%═══════════════════════════════════════════════════════════%RST%
+echo.
+echo  %DGRAY%  Los instaladores se ejecutan desde el paquete interno.%RST%
+echo  %DGRAY%  No se requiere internet para esta operacion.%RST%
+echo.
+echo    [1] HP  (HP Installer.exe)                %DGRAY%[ En desarrollo ]%RST%
+echo    [2] Lexmark  (Lexmark.exe)                %DGRAY%[ En desarrollo ]%RST%
+echo    [0] Volver
+echo.
+echo  %ORANGE%═══════════════════════════════════════════════════════════%RST%
+set /p impop="%ORANGE%  >> %RST%"
+
+if "%impop%"=="1" goto :EN_DESARROLLO
+if "%impop%"=="2" goto :EN_DESARROLLO
+if "%impop%"=="0" goto :INSTALACION_INICIAL
+goto :IMPRESORAS
+
+:IMP_HP
+cls
+echo.
+echo  %ORANGE%[INFO] Iniciando instalador HP...%RST%
+echo  %DGRAY%  Espera a que termine antes de continuar.%RST%
+echo.
+call :REGISTRAR_LOG "IMP_HP" "INICIADO"
+start "" "%USERPROFILE%\Downloads\HPInstaller.exe"
+echo.
+pause
+goto :IMPRESORAS
+
+:IMP_LEXMARK
+cls
+echo.
+echo  %ORANGE%[INFO] Iniciando instalador Lexmark...%RST%
+echo  %DGRAY%  Este instalador es grande (~95 MB), puede tardar.%RST%
+echo  %DGRAY%  Espera a que termine antes de continuar.%RST%
+echo.
+call :REGISTRAR_LOG "IMP_LEX" "INICIADO"
+start "" "%USERPROFILE%\Downloads\Lexmark.exe"
+echo.
+pause
+goto :IMPRESORAS
+
+:: ----------------------------------------------------------
+:: [4] DRIVER BOOSTER
+:: ----------------------------------------------------------
+:DriverBooster
+cls
+echo.
+echo  %ORANGE%═══════════════════════════════════════════════════════════%RST%
+echo  %BOLD%%CW%  DRIVER BOOSTER PORTABLE%RST%
+echo  %ORANGE%═══════════════════════════════════════════════════════════%RST%
+echo.
+call :REGISTRAR_LOG "DRVBST" "INICIADO"
+echo  %DGRAY%  Iniciando Driver Booster...%RST%
+echo  %DGRAY%  El programa se abrira en una ventana separada.%RST%
+taskkill /f /im DriverBooster.exe >nul 2>&1
+taskkill /f /im DriverBooster_Setup.exe >nul 2>&1
+timeout /t 2 /nobreak >nul
+start "" "%USERPROFILE%\Downloads\DriverBooster.exe"
+call :REGISTRAR_LOG "DRVBST" "LANZADO"
+goto :INSTALACION_INICIAL
 
 :: ==========================================
 :: DESARROLLO
