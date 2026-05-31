@@ -1,7 +1,8 @@
-12.0
+12.1
 - Nuevo modulo de instalacion inicial
 - Nuevas integraciones para versiones futuras
 - Instlacion para profesor y alumno ya disponibles
+- Blindaje al numero de serie
 
 - Actualicen desde una version anterior a la 10.0
 - Cambien el nombre a RTIC_Hub_FCA para que funcione
