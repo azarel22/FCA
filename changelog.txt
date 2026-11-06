@@ -1,8 +1,7 @@
-12.1
-- Nuevo modulo de instalacion inicial
-- Nuevas integraciones para versiones futuras
-- Instlacion para profesor y alumno ya disponibles
+
+- Nueva estetica mas facil de entender
+- Inicio de sesion mas rapido
 - Blindaje al numero de serie
 
-- Actualicen desde una version anterior a la 10.0
-- Cambien el nombre a RTIC_Hub_FCA para que funcione
+- Bloquear y permitir cambiar fondo de pantalla
+- correccion de falso positivo con red
